@@ -17,7 +17,7 @@
     <repository>
         <id>archiva.internal</id>
         <name>Gizwits Internal Repo</name>
-        <url>https://archiva.gizwits.com/repository/internal/</url>
+        <url>https://archiva.gizwits.com/repository/general/</url>
     </repository>
     ...
 </repositories>

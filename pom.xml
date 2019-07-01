@@ -26,11 +26,6 @@
             <name>aliyun maven</name>
             <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
         </repository>
-        <repository>
-            <id>archiva.internal</id>
-            <name>Gizwits Internal Repo</name>
-            <url>https://archiva.gizwits.com/repository/internal/</url>
-        </repository>
     </repositories>
 
     <dependencyManagement>
