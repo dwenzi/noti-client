@@ -1,0 +1,89 @@
+package com.gizwits.noti.noticlient.bean.req.body;
+
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.annotation.JSONField;
+import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.gizwits.noti.noticlient.bean.req.NotiReqCommandType;
+import com.gizwits.noti.noticlient.bean.req.NotiReqControlType;
+import com.gizwits.noti.noticlient.bean.req.SourceCategory;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
+
+import java.util.List;
+
+/**
+ * @author Jcxcc
+ * @since 1.0
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Accessors(chain = true)
+@EqualsAndHashCode(callSuper = false)
+public final class ControlReqCommandBody extends AbstractCommandBody {
+
+    /**
+     * 可用于标识本消息，将会在回复指令中返回
+     */
+    @JSONField(name = "msg_id")
+    private String msgId;
+
+    @JSONField(name = "data")
+    private List<ControlBody> controlBody;
+
+    @Data
+    @AllArgsConstructor
+    @Accessors(chain = true)
+    public static class ControlBody {
+        /**
+         * V4 产品数据点协议格式，填写write_attrs；V4 产品自定义协议格式，填写 write；V1 产品协议格式，填写 write_v1
+         */
+        private NotiReqControlType cmd;
+
+        /**
+         * 固定填写 noti
+         */
+        private SourceCategory source;
+
+        @JSONField(name = "data")
+        private Payload payload;
+
+        public ControlBody() {
+            this.source = SourceCategory.noti;
+        }
+
+        @Data
+        @NoArgsConstructor
+        @AllArgsConstructor
+        @Accessors(chain = true)
+        public static class Payload {
+            private String mac;
+
+            private String did;
+
+            @JSONField(name = "product_key")
+            private String productKey;
+
+            /**
+             * V4 产品数据点协议格式，选择data.data.attrs；
+             */
+            private JSONObject attrs;
+
+            /**
+             * V4 产品自定义协议格式（参考通用数据点协议之透传业务指令），选择data.data.raw；
+             * V1 产品协议格式，选择 data.data.raw
+             */
+            private int[] raw;
+        }
+    }
+
+
+    @Override
+    String getJson() {
+        this.setCmd(NotiReqCommandType.remote_control_req);
+        return JSONObject.toJSONString(this, SerializerFeature.IgnoreNonFieldGetter, SerializerFeature.WriteEnumUsingName);
+    }
+}
