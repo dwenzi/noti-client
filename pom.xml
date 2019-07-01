@@ -124,7 +124,7 @@
     <distributionManagement>
         <repository>
             <id>archiva.general</id>
-            <name>General Release Repository</name>
+            <name>Gizwits General Repository</name>
             <url>https://archiva.gizwits.com/repository/general/</url>
         </repository>
     </distributionManagement>

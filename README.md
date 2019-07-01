@@ -15,8 +15,8 @@
 <repositories>
     ...
     <repository>
-        <id>archiva.internal</id>
-        <name>Gizwits Internal Repo</name>
+        <id>archiva.general</id>
+        <name>Gizwits General Repo</name>
         <url>https://archiva.gizwits.com/repository/general/</url>
     </repository>
     ...
