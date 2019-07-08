@@ -23,7 +23,7 @@ import java.util.List;
 @AllArgsConstructor
 @Accessors(chain = true)
 @EqualsAndHashCode(callSuper = false)
-public final class ControlReqCommandBody extends AbstractCommandBody {
+public class ControlReqCommandBody extends AbstractCommandBody {
 
     /**
      * 可用于标识本消息，将会在回复指令中返回
@@ -60,8 +60,11 @@ public final class ControlReqCommandBody extends AbstractCommandBody {
         @AllArgsConstructor
         @Accessors(chain = true)
         public static class Payload {
+
+            @JSONField(name = "mac")
             private String mac;
 
+            @JSONField(name = "did")
             private String did;
 
             @JSONField(name = "product_key")
@@ -83,7 +86,8 @@ public final class ControlReqCommandBody extends AbstractCommandBody {
 
     @Override
     String getJson() {
-        this.setCmd(NotiReqCommandType.remote_control_req);
+        //设置为v1控制
+        this.cmd = NotiReqCommandType.remote_control_req;
         return JSONObject.toJSONString(this, SerializerFeature.IgnoreNonFieldGetter, SerializerFeature.WriteEnumUsingName);
     }
 }
