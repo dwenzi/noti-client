@@ -282,7 +282,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
         }
 
         this.loginState = loginState;
-        log.info("设置客户端登录状态成功.[{}]", loginState);
+        log.info("客户端登录状态为[{}]", loginState);
     }
 
     @Override
@@ -400,7 +400,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
             future.addListener((ChannelFutureListener) futureListener -> {
                 if (futureListener.isSuccess()) {
                     this.channel = futureListener.channel();
-                    log.info("connect to noti server successfully!");
+                    log.info("连接到snoti服务器成功, 即将发起登录请求.");
 
                 } else {
 

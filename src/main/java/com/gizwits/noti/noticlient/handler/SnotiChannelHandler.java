@@ -41,6 +41,10 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
 
         } else {
 
+            if (log.isDebugEnabled()) {
+                log.debug("snoti客户端接收到消息: {}", message);
+            }
+
             JSONObject jsonObject = JSONObject.parseObject(message);
             String cmd = StringUtils.defaultString(jsonObject.getString("cmd"), NotiReqCommandType.invalid_msg.getCode());
             NotiReqCommandType notiReqCommandType = CommandUtils.getReqCmd(cmd);
