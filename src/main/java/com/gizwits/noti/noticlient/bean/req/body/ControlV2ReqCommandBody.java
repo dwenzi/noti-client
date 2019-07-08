@@ -2,7 +2,7 @@ package com.gizwits.noti.noticlient.bean.req.body;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
-import com.gizwits.noti.noticlient.bean.req.NotiReqCommandType;
+import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -27,7 +27,7 @@ public final class ControlV2ReqCommandBody extends ControlReqCommandBody {
     @Override
     String getJson() {
         //设置为v2控制
-        this.cmd = NotiReqCommandType.remote_control_v2_req;
+        this.cmd = NotiGeneralCommandType.remote_control_v2_req;
         return JSONObject.toJSONString(this, SerializerFeature.IgnoreNonFieldGetter, SerializerFeature.WriteEnumUsingName);
     }
 }

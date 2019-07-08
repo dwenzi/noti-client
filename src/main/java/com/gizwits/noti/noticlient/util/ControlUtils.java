@@ -2,7 +2,7 @@ package com.gizwits.noti.noticlient.util;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
-import com.gizwits.noti.noticlient.bean.req.NotiReqCommandType;
+import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import com.gizwits.noti.noticlient.bean.req.NotiReqControlType;
 import com.gizwits.noti.noticlient.bean.req.SourceCategory;
 import com.gizwits.noti.noticlient.bean.req.body.*;
@@ -87,11 +87,11 @@ public class ControlUtils {
             case NB_IoT:
                 InternalControlReqCommandBody nbBody = getInternalControlReqCommandBody(msgId, productKey, mac, did, dataPoint);
                 nbBody.setSource(SourceCategory.huawei);
-                nbBody.setCmd(NotiReqCommandType.remote_control_nb_req);
+                nbBody.setCmd(NotiGeneralCommandType.remote_control_nb_req);
                 return nbBody;
             case LORA:
                 InternalControlReqCommandBody loraBody = getInternalControlReqCommandBody(msgId, productKey, mac, did, dataPoint);
-                loraBody.setCmd(NotiReqCommandType.remote_control_lora_req);
+                loraBody.setCmd(NotiGeneralCommandType.remote_control_lora_req);
                 return loraBody;
 
             case V2:

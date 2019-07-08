@@ -1,6 +1,6 @@
 package com.gizwits.noti.noticlient.bean.req.body;
 
-import com.gizwits.noti.noticlient.bean.req.NotiReqCommandType;
+import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import com.gizwits.noti.noticlient.bean.req.SourceCategory;
 
 /**
@@ -15,7 +15,7 @@ public interface InternalControlOrder {
      *
      * @param cmd the cmd
      */
-    void setCmd(NotiReqCommandType cmd);
+    void setCmd(NotiGeneralCommandType cmd);
 
     /**
      * Sets source.

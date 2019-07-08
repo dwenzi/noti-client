@@ -2,7 +2,7 @@ package com.gizwits.noti.noticlient.bean.req.body;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
-import com.gizwits.noti.noticlient.bean.req.NotiReqCommandType;
+import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -55,7 +55,7 @@ public final class LoginReqCommandBody extends AbstractCommandBody {
 
     @Override
     String getJson() {
-        this.setCmd(NotiReqCommandType.login_req);
+        this.setCmd(NotiGeneralCommandType.login_req);
         return JSONObject.toJSONString(this, SerializerFeature.WriteEnumUsingName, SerializerFeature.IgnoreNonFieldGetter);
     }
 }

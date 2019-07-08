@@ -7,7 +7,7 @@ import lombok.Getter;
  * @since 1.0
  */
 @Getter
-public enum NotiReqCommandType {
+public enum NotiGeneralCommandType {
     login_req("login_req", "", "登录请求"),
     login_res("login_res", "", "登录回复"),
     event_push("event_push", "", "事件推送"),
@@ -21,7 +21,7 @@ public enum NotiReqCommandType {
     ping("ping", "{\"cmd\":\"ping\"}\n", "客户端发往服务端的心跳"),
     invalid_msg("invalid_msg", "", "无效信息");
 
-    NotiReqCommandType(String code, String order, String description) {
+    NotiGeneralCommandType(String code, String order, String description) {
         this.code = code;
         this.order = order;
         this.description = description;

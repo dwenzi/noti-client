@@ -3,7 +3,7 @@ package com.gizwits.noti.noticlient.bean.req.body;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.alibaba.fastjson.serializer.SerializerFeature;
-import com.gizwits.noti.noticlient.bean.req.NotiReqCommandType;
+import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import com.gizwits.noti.noticlient.bean.req.NotiReqControlType;
 import com.gizwits.noti.noticlient.bean.req.SourceCategory;
 import lombok.AllArgsConstructor;
@@ -87,7 +87,7 @@ public class ControlReqCommandBody extends AbstractCommandBody {
     @Override
     String getJson() {
         //设置为v1控制
-        this.cmd = NotiReqCommandType.remote_control_req;
+        this.cmd = NotiGeneralCommandType.remote_control_req;
         return JSONObject.toJSONString(this, SerializerFeature.IgnoreNonFieldGetter, SerializerFeature.WriteEnumUsingName);
     }
 }
