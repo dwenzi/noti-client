@@ -14,6 +14,7 @@ import com.gizwits.noti.noticlient.handler.PushEventMessageCountingHandler;
 import com.gizwits.noti.noticlient.handler.SnotiChannelHandler;
 import com.gizwits.noti.noticlient.util.CommandUtils;
 import com.gizwits.noti.noticlient.util.ControlUtils;
+import com.gizwits.noti.noticlient.util.UniqueArrayBlockingQueue;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
@@ -83,7 +84,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                                 if (!future.isSuccess()) {
                                     log.warn("回复ack失败, 即将返回ack回复队列重试. [{}]", ackMessage);
                                     ackReplyQueue.put(ackMessage);
-                                    log.info("返回ack回复队列成功. [{}]", ackMessage);
+                                    log.info("重新放入ack回复队列成功. [{}]", ackMessage);
                                 } else {
                                     if (log.isDebugEnabled()) {
                                         log.debug("回复ack成功. [{}]", ackMessage);
@@ -103,6 +104,8 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                                 channel.writeAndFlush(controlOrder).addListener(future -> {
                                     if (!future.isSuccess()) {
                                         log.warn("下发控制指令失败. [{}]", controlOrder);
+                                        controlQueue.put(controlOrder);
+                                        log.info("重新放入控制队列成功. [{}]", controlOrder);
                                     } else {
                                         if (log.isDebugEnabled()) {
                                             log.debug("下发控制指令成功. [{}]", controlOrder);
@@ -377,11 +380,11 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
         }
 
         if (Objects.isNull(this.ackReplyQueue)) {
-            this.ackReplyQueue = new ArrayBlockingQueue<>(this.snotiConfig.getAckReplyQueueCapacity());
+            this.ackReplyQueue = new UniqueArrayBlockingQueue<>(this.snotiConfig.getAckReplyQueueCapacity());
         }
 
         if (Objects.isNull(this.controlQueue)) {
-            this.controlQueue = new ArrayBlockingQueue<>(this.snotiConfig.getControlQueueCapacity());
+            this.controlQueue = new UniqueArrayBlockingQueue<>(this.snotiConfig.getControlQueueCapacity());
         }
     }
 
