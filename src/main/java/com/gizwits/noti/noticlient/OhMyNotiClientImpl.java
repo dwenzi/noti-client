@@ -268,7 +268,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
 
         this.channel.close();
         this.callback.reload(authorizes);
-        log.info("noti client about to reload...");
+        log.info("snoti客户端即将重新加载登录信息 ...");
         return this;
     }
 
@@ -354,7 +354,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                 }
             };
 
-            this.bootstrap = automaticallyGeneratedBootstrap()
+            this.bootstrap = automaticallyGeneratedBootstrap(this.snotiConfig.getUseEpoll())
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                     .option(ChannelOption.SO_KEEPALIVE, true)
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 1000 * 3)
@@ -363,7 +363,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                     .handler(handler);
             this.doConnect();
         } catch (Exception e) {
-            log.error("noti startup error!");
+            log.error("snoti客户端启动错误!!!");
 
             throw new RuntimeException(e);
         }

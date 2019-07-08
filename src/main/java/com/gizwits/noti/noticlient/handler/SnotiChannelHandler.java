@@ -66,10 +66,9 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
                             .orElse(false);
                     if (loginResult) {
                         log.debug("snoti客户端登录成功...");
-                        ohMyNotiClient.getCallback().loginSuccessful();
-
-                        //登陆成功后才允许推送信息
                         ohMyNotiClient.setLoginState(LoginState.LOGIN_SUCCESSFUL);
+                        ohMyNotiClient.getCallback().loginSuccessful();
+                        //登陆成功后才允许推送信息
                         ohMyNotiClient.switchPushMessage();
                     } else {
                         log.warn("snoti客户端登录失败...");
