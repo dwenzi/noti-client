@@ -13,6 +13,9 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.gizwits.noti.noticlient.bean.SnotiConstants.EVENT_TYPE_KEY;
+import static com.gizwits.noti.noticlient.bean.SnotiConstants.STR_CMD;
+
 /**
  * The type Command utils.
  *
@@ -24,14 +27,6 @@ public class CommandUtils {
 
     private static final Map<String, NotiReqCommandType> REQ_CMD_MAP;
     private static final Map<String, NotiRespPushEvents> RESP_EVENT_MAP;
-
-    private static final String STR_CMD = "cmd";
-    private static final String EVENT_TYPE_KEY = "event_type";
-    /**
-     * The constant STR_DELIVERY_ID.
-     */
-    public static final String STR_DELIVERY_ID = "delivery_id";
-
 
     static {
         REQ_CMD_MAP = Arrays.stream(NotiReqCommandType.values())

@@ -3,7 +3,6 @@ package com.gizwits.noti.noticlient.bean.req.body;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.gizwits.noti.noticlient.bean.req.NotiReqCommandType;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -21,7 +20,6 @@ import lombok.experimental.Accessors;
  */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 @Accessors(chain = true)
 @EqualsAndHashCode(callSuper = false)
 public final class ControlV2ReqCommandBody extends ControlReqCommandBody {

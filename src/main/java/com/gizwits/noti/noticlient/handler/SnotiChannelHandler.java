@@ -37,11 +37,12 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, String message) throws Exception {
         if (StringUtils.isBlank(message)) {
-            log.warn("client received a blank message");
+            log.warn("snoti客户端接收到空消息.");
 
         } else {
 
             if (log.isDebugEnabled()) {
+                //log为debug级别时 输出接收消息
                 log.debug("snoti客户端接收到消息: {}", message);
             }
 
@@ -166,7 +167,6 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
             IdleStateEvent event = (IdleStateEvent) evt;
             switch (event.state()) {
                 case WRITER_IDLE:
-                    log.debug("No data was sent for a while.");
                     log.info("发送ping请求到服务器...");
 
                     ctx.writeAndFlush(NotiReqCommandType.ping.getOrder());

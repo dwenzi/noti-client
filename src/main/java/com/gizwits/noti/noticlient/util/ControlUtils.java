@@ -35,7 +35,7 @@ public class ControlUtils {
     private final static byte RAW_PREFIX = (byte) 0X05;
     private final static String
             UUID_SEPARATOR = "-",
-            UUID_SUFFIX = "==";
+            BASE64_SUFFIX = "==";
 
     /**
      * 获取控制指令messageId
@@ -50,7 +50,7 @@ public class ControlUtils {
     private static String getCtrlMsgId() {
         String source = UUID.randomUUID().toString().replaceAll(UUID_SEPARATOR, StringUtils.EMPTY).substring(0, 16);
         String encode = Base64.getEncoder().encodeToString(source.getBytes(StandardCharsets.UTF_8));
-        return StringUtils.endsWith(encode, UUID_SUFFIX) ? StringUtils.substringBeforeLast(encode, UUID_SUFFIX) : encode;
+        return StringUtils.endsWith(encode, BASE64_SUFFIX) ? StringUtils.substringBeforeLast(encode, BASE64_SUFFIX) : encode;
     }
 
     private static ControlReqCommandBody.ControlBody getControlBody(String productKey, String mac, String did, NotiReqControlType controlType) {

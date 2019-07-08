@@ -37,6 +37,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.gizwits.noti.noticlient.bean.SnotiConstants.STR_DELIVERY_ID;
+
 /**
  * @author Jcxcc
  * @since 1.0
@@ -138,7 +140,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
         try {
             JSONObject json = receiveQueue.take();
 
-            String ackMessage = CommandUtils.getEventAckMessage(json.get(CommandUtils.STR_DELIVERY_ID));
+            String ackMessage = CommandUtils.getEventAckMessage(json.get(STR_DELIVERY_ID));
             sendAckMessage(ackMessage);
             return json;
 
@@ -403,12 +405,12 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
             future.addListener((ChannelFutureListener) futureListener -> {
                 if (futureListener.isSuccess()) {
                     this.channel = futureListener.channel();
-                    log.info("连接到snoti服务器成功, 即将发起登录请求.");
+                    log.info("连接到snoti服务器成功, 即将发起登录请求. host[{}] port[{}]", this.snotiConfig.getHost(), this.snotiConfig.getPort());
 
                 } else {
 
                     Long reConnectSeconds = this.snotiConfig.getReConnectSeconds();
-                    log.warn("连接snoti服务器失败, [{}]秒后尝试重连.", reConnectSeconds);
+                    log.warn("连接snoti服务器失败, [{}]秒后尝试重连. host[{}] port[{}]", reConnectSeconds, this.snotiConfig.getHost(), this.snotiConfig.getPort());
                     futureListener.channel().eventLoop().schedule(this::doConnect, reConnectSeconds, TimeUnit.SECONDS);
                 }
 
