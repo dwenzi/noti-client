@@ -95,10 +95,19 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
                     boolean storeControlRespSuccessful = ohMyNotiClient.storeInformation(jsonObject);
                     //存储信息成功
                     if (storeControlRespSuccessful) {
-                        //消费端成功获取到消息才回复ack
                     } else {
                         log.error("存储消息失败. 消息[{}]", jsonObject.toJSONString());
                     }
+                    break;
+
+                case remote_control_v2_res:
+                    boolean storeControlV2RespSuccessful = ohMyNotiClient.storeInformation(jsonObject);
+                    //存储信息成功
+                    if (storeControlV2RespSuccessful) {
+                    } else {
+                        log.error("存储消息失败. 消息[{}]", jsonObject.toJSONString());
+                    }
+                    break;
 
                 case invalid_msg:
                 default:
