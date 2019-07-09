@@ -3,6 +3,7 @@ package com.gizwits.noti.noticlient;
 import com.gizwits.noti.noticlient.config.SnotiConfig;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -38,8 +39,7 @@ public abstract class AbstractSnotiClient {
      * @return the boolean
      */
     protected static boolean canUseEpoll() {
-        String property = System.getProperty("os.name").toLowerCase().trim();
-        return property.contains("linux");
+        return Epoll.isAvailable();
     }
 
     private static Bootstrap generateBootstrap(EventLoopGroup eventLoopGroup, Class<? extends SocketChannel> channelClazz) {
@@ -51,13 +51,13 @@ public abstract class AbstractSnotiClient {
      *
      * @return the bootstrap
      */
-    public static Bootstrap automaticallyGeneratedBootstrap() {
-        if (canUseEpoll()) {
-            log.info("使用epoll. 当前系统为linux, 支持epoll.");
+    public static Bootstrap automaticallyGeneratedBootstrap(final boolean useEpoll) {
+        if (useEpoll && canUseEpoll()) {
+            log.info("生成epoll bootstrap");
             return generateBootstrap(new EpollEventLoopGroup(getCoreSize()), EpollSocketChannel.class);
 
         } else {
-            log.info("使用nio. 当前系统不支持支持epoll.");
+            log.info("生成nio bootstrap");
             return generateBootstrap(new NioEventLoopGroup(getCoreSize()), NioSocketChannel.class);
         }
     }

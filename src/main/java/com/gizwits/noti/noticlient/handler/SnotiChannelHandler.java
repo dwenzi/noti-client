@@ -3,7 +3,7 @@ package com.gizwits.noti.noticlient.handler;
 import com.alibaba.fastjson.JSONObject;
 import com.gizwits.noti.noticlient.OhMyNotiClient;
 import com.gizwits.noti.noticlient.OhMyNotiClientImpl;
-import com.gizwits.noti.noticlient.bean.req.NotiReqCommandType;
+import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import com.gizwits.noti.noticlient.enums.LoginState;
 import com.gizwits.noti.noticlient.util.CommandUtils;
 import io.netty.channel.ChannelHandlerContext;
@@ -37,15 +37,20 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, String message) throws Exception {
         if (StringUtils.isBlank(message)) {
-            log.warn("client received a blank message");
+            log.warn("snoti客户端接收到空消息.");
 
         } else {
 
-            JSONObject jsonObject = JSONObject.parseObject(message);
-            String cmd = StringUtils.defaultString(jsonObject.getString("cmd"), NotiReqCommandType.invalid_msg.getCode());
-            NotiReqCommandType notiReqCommandType = CommandUtils.getReqCmd(cmd);
+            if (log.isDebugEnabled()) {
+                //log为debug级别时 输出接收消息
+                log.debug("snoti客户端接收到消息: {}", message);
+            }
 
-            switch (notiReqCommandType) {
+            JSONObject jsonObject = JSONObject.parseObject(message);
+            String cmd = StringUtils.defaultString(jsonObject.getString("cmd"), NotiGeneralCommandType.invalid_msg.getCode());
+            NotiGeneralCommandType notiGeneralCommandType = CommandUtils.getReqCmd(cmd);
+
+            switch (notiGeneralCommandType) {
                 case event_push:
                     boolean storeEventSuccessful = ohMyNotiClient.storeInformation(jsonObject);
                     //存储信息成功
@@ -66,10 +71,9 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
                             .orElse(false);
                     if (loginResult) {
                         log.debug("snoti客户端登录成功...");
-                        ohMyNotiClient.getCallback().loginSuccessful();
-
-                        //登陆成功后才允许推送信息
                         ohMyNotiClient.setLoginState(LoginState.LOGIN_SUCCESSFUL);
+                        ohMyNotiClient.getCallback().loginSuccessful();
+                        //登陆成功后才允许推送信息
                         ohMyNotiClient.switchPushMessage();
                     } else {
                         log.warn("snoti客户端登录失败...");
@@ -91,10 +95,19 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
                     boolean storeControlRespSuccessful = ohMyNotiClient.storeInformation(jsonObject);
                     //存储信息成功
                     if (storeControlRespSuccessful) {
-                        //消费端成功获取到消息才回复ack
                     } else {
                         log.error("存储消息失败. 消息[{}]", jsonObject.toJSONString());
                     }
+                    break;
+
+                case remote_control_v2_res:
+                    boolean storeControlV2RespSuccessful = ohMyNotiClient.storeInformation(jsonObject);
+                    //存储信息成功
+                    if (storeControlV2RespSuccessful) {
+                    } else {
+                        log.error("存储消息失败. 消息[{}]", jsonObject.toJSONString());
+                    }
+                    break;
 
                 case invalid_msg:
                 default:
@@ -163,10 +176,9 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
             IdleStateEvent event = (IdleStateEvent) evt;
             switch (event.state()) {
                 case WRITER_IDLE:
-                    log.debug("No data was sent for a while.");
                     log.info("发送ping请求到服务器...");
 
-                    ctx.writeAndFlush(NotiReqCommandType.ping.getOrder());
+                    ctx.writeAndFlush(NotiGeneralCommandType.ping.getOrder());
                     break;
 
                 default:

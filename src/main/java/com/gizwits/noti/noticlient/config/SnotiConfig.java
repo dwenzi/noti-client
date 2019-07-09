@@ -1,5 +1,6 @@
 package com.gizwits.noti.noticlient.config;
 
+import com.gizwits.noti.noticlient.AbstractSnotiClient;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -28,6 +29,8 @@ public class SnotiConfig {
         this.heartbeatIntervalSeconds = 60L;
 
         this.enableMessageCounting = false;
+
+        this.useEpoll = true;
     }
 
     /**
@@ -92,11 +95,15 @@ public class SnotiConfig {
 
     /**
      * 主机
+     * <p>
+     * 默认为 snoti.gizwits.com, 即公有云snoti主机
      */
     private String host;
 
     /**
      * 端口号
+     * <p>
+     * 默认为 2017, 即公有云snoti端口
      */
     private Integer port;
 
@@ -148,4 +155,14 @@ public class SnotiConfig {
      * 默认不开启{@link #SnotiConfig()}
      */
     private Boolean enableMessageCounting;
+
+    /**
+     * 是否使用 epoll
+     * <p>
+     * 默认为true{@link #SnotiConfig()}
+     * useEpoll = true 时, 意味着:
+     * 如果系统支持使用epoll则优先使用epoll {@link AbstractSnotiClient#automaticallyGeneratedBootstrap(boolean)}
+     * useEpoll = false 时, 则不会使用epoll
+     */
+    private Boolean useEpoll;
 }

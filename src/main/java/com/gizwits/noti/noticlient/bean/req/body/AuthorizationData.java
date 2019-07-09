@@ -5,7 +5,6 @@ import com.gizwits.noti.noticlient.enums.ProtocolType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
@@ -18,7 +17,6 @@ import java.util.stream.Collectors;
  * @since 1.0
  */
 @Data
-@ToString
 @AllArgsConstructor
 @EqualsAndHashCode(exclude = {"protocolType", "events"})
 @Accessors(chain = true)
