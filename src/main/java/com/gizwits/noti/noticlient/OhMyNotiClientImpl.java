@@ -40,6 +40,8 @@ import java.util.stream.Collectors;
 import static com.gizwits.noti.noticlient.bean.SnotiConstants.STR_DELIVERY_ID;
 
 /**
+ * Snoti客户端实现
+ *
  * @author Jcxcc
  * @since 1.0
  */
@@ -197,14 +199,8 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     }
 
     @Override
-    public boolean control(String productKey, String mac, String did, Object raw) {
-        return this.control(ControlUtils.switchControl(productKey, mac, did, raw), false);
-    }
-
-    @Override
-    public boolean control(String productKey, String mac, String did, Map<String, Object> dataPoint) {
-        ProtocolType protocolType = productKeyProtocolMap.getOrDefault(productKey, ProtocolType.WiFi_GPRS);
-        return this.control(ControlUtils.switchControl(StringUtils.EMPTY, productKey, mac, did, dataPoint, protocolType), false);
+    public boolean control(String msgId, String productKey, String mac, String did, Object raw) {
+        return this.control(ControlUtils.switchControl(msgId, productKey, mac, did, raw), true);
     }
 
     @Override
@@ -216,19 +212,13 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
 
     @Override
     public boolean tryControl(String productKey, String mac, String did, Object raw) {
-        return this.control(ControlUtils.switchControl(productKey, mac, did, raw), true);
+        return this.control(ControlUtils.switchControl(StringUtils.EMPTY, productKey, mac, did, raw), true);
     }
 
     @Override
     public boolean tryControl(String productKey, String mac, String did, Map<String, Object> dataPoint) {
         ProtocolType protocolType = productKeyProtocolMap.getOrDefault(productKey, ProtocolType.WiFi_GPRS);
         return this.control(ControlUtils.switchControl(StringUtils.EMPTY, productKey, mac, did, dataPoint, protocolType), true);
-    }
-
-    @Override
-    public OhMyNotiClientImpl setHost(String host) {
-        this.snotiConfig.setHost(host);
-        return this;
     }
 
     @Override
@@ -243,12 +233,6 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     }
 
     @Override
-    public OhMyNotiClientImpl setPort(int port) {
-        this.snotiConfig.setPort(port);
-        return this;
-    }
-
-    @Override
     public OhMyNotiClientImpl addLoginAuthorizes(AuthorizationData... authorizes) {
         if (Objects.isNull(loginCommand)) {
             synchronized (OhMyNotiClientImpl.class) {
@@ -259,8 +243,9 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
         }
 
         loginCommand.addLoginAuthorizes(authorizes);
-        loginCommand.setPrefetch_count(this.snotiConfig.getPrefetchCount());
+        loginCommand.setPrefetchCount(this.snotiConfig.getPrefetchCount());
 
+        //初始化产品协议map, 方便构建控制指令
         productKeyProtocolMap = loginCommand.getData().stream()
                 .collect(Collectors.toMap(AuthorizationData::getProduct_key, AuthorizationData::getProtocolType));
         return this;
