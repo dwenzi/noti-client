@@ -12,6 +12,7 @@ import com.gizwits.noti.noticlient.enums.ProtocolType;
 import com.gizwits.noti.noticlient.handler.NoDataChannelHandler;
 import com.gizwits.noti.noticlient.handler.PushEventMessageCountingHandler;
 import com.gizwits.noti.noticlient.handler.SnotiChannelHandler;
+import com.gizwits.noti.noticlient.handler.SnotiMetricsHandler;
 import com.gizwits.noti.noticlient.util.CommandUtils;
 import com.gizwits.noti.noticlient.util.ControlUtils;
 import com.gizwits.noti.noticlient.util.UniqueArrayBlockingQueue;
@@ -336,6 +337,11 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                         p.addLast(new NoDataChannelHandler(noDataWaringMinutes, OhMyNotiClientImpl.this.getCallback()));
                     }
 
+                    if (OhMyNotiClientImpl.this.snotiConfig.getWithMetrics()) {
+                        log.info("使用snoti指标统计.");
+                        p.addLast(new SnotiMetricsHandler());
+                    }
+
                     if (OhMyNotiClientImpl.this.snotiConfig.getEnableMessageCounting()) {
                         //开启推送消息计数
                         log.info("设置snoti客户端推送消息计数器.");
@@ -419,9 +425,9 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
      */
     @Override
     public void doStop() {
-        log.warn("stopping connect...");
+        log.warn("正在停止snoti客户端...");
         this.stopComponents();
         this.callback.stop();
-        log.warn("the client is stop!!!");
+        log.warn("停止snoti客户端完成!!!");
     }
 }
