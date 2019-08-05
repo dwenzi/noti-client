@@ -44,12 +44,13 @@
     </dependencyManagement>
 
     <properties>
-        <snoti.client.version>1.8.6</snoti.client.version>
+        <snoti.client.version>1.8.7</snoti.client.version>
         <project.release.version>${snoti.client.version}-SNAPSHOT</project.release.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <apache.lang.version>3.7</apache.lang.version>
         <fastjson.version>1.2.46</fastjson.version>
+        <metrics.version>4.1.0</metrics.version>
         <netty.version>4.1.34.Final</netty.version>
         <ch.qos.logback.version>1.2.3</ch.qos.logback.version>
         <lombok.version>1.16.22</lombok.version>
@@ -57,6 +58,12 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>${metrics.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>

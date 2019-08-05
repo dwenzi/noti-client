@@ -1,6 +1,6 @@
 package com.gizwits.noti.noticlient.bean.req.body;
 
-import com.gizwits.noti.noticlient.bean.req.NotiReqCommandType;
+import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,7 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 @AllArgsConstructor
 public abstract class AbstractCommandBody {
 
-    protected NotiReqCommandType cmd;
+    protected NotiGeneralCommandType cmd;
 
     /**
      * get json

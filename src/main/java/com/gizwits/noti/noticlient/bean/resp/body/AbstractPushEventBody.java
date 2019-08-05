@@ -1,7 +1,7 @@
 package com.gizwits.noti.noticlient.bean.resp.body;
 
 import com.alibaba.fastjson.annotation.JSONField;
-import com.gizwits.noti.noticlient.bean.req.NotiReqCommandType;
+import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -21,7 +21,7 @@ public abstract class AbstractPushEventBody {
      * 固定为 event_push
      */
     @JSONField(name = "cmd")
-    protected String cmd = NotiReqCommandType.event_push.getCode();
+    protected String cmd = NotiGeneralCommandType.event_push.getCode();
 
     /**
      * ACK

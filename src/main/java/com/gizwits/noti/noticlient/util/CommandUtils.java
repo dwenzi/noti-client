@@ -1,7 +1,7 @@
 package com.gizwits.noti.noticlient.util;
 
 import com.alibaba.fastjson.JSONObject;
-import com.gizwits.noti.noticlient.bean.req.NotiReqCommandType;
+import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import com.gizwits.noti.noticlient.bean.resp.NotiRespPushEvents;
 import com.gizwits.noti.noticlient.bean.resp.body.AbstractPushEventBody;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +13,9 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.gizwits.noti.noticlient.bean.SnotiConstants.EVENT_TYPE_KEY;
+import static com.gizwits.noti.noticlient.bean.SnotiConstants.STR_CMD;
+
 /**
  * The type Command utils.
  *
@@ -22,20 +25,12 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CommandUtils {
 
-    private static final Map<String, NotiReqCommandType> REQ_CMD_MAP;
+    private static final Map<String, NotiGeneralCommandType> REQ_CMD_MAP;
     private static final Map<String, NotiRespPushEvents> RESP_EVENT_MAP;
 
-    private static final String STR_CMD = "cmd";
-    private static final String EVENT_TYPE_KEY = "event_type";
-    /**
-     * The constant STR_DELIVERY_ID.
-     */
-    public static final String STR_DELIVERY_ID = "delivery_id";
-
-
     static {
-        REQ_CMD_MAP = Arrays.stream(NotiReqCommandType.values())
-                .collect(Collectors.toMap(NotiReqCommandType::getCode, Function.identity()));
+        REQ_CMD_MAP = Arrays.stream(NotiGeneralCommandType.values())
+                .collect(Collectors.toMap(NotiGeneralCommandType::getCode, Function.identity()));
         log.info("初始化请求命令路由成功.");
 
         RESP_EVENT_MAP = Arrays.stream(NotiRespPushEvents.values())
@@ -59,8 +54,8 @@ public class CommandUtils {
      * @param code the code
      * @return req cmd
      */
-    public static NotiReqCommandType getReqCmd(String code) {
-        return REQ_CMD_MAP.getOrDefault(code, NotiReqCommandType.invalid_msg);
+    public static NotiGeneralCommandType getReqCmd(String code) {
+        return REQ_CMD_MAP.getOrDefault(code, NotiGeneralCommandType.invalid_msg);
     }
 
     /**
@@ -108,5 +103,39 @@ public class CommandUtils {
      */
     public static <T extends AbstractPushEventBody> T parsePushEvent(JSONObject json, Class<T> clazz) {
         return json.toJavaObject(clazz);
+    }
+
+    /**
+     * 十六进制字符串转int数组
+     *
+     * @param hex16Str the hex 16 str
+     * @return the int [ ]
+     */
+    public static int[] hexStrToIntArr(String hex16Str) {
+        byte[] bytes = hexStrToBytes(hex16Str);
+        int[] ret = new int[bytes.length];
+        for (int i = 0; i < bytes.length; i++) {
+            ret[i] = (bytes[i]) & 0xff;
+        }
+        return ret;
+    }
+
+    /**
+     * 十六进制字符串转byte数组
+     *
+     * @param hex16Str the hex 16 str
+     * @return the byte [ ]
+     */
+    public static byte[] hexStrToBytes(String hex16Str) {
+        int len = hex16Str.length();
+        byte[] ba = new byte[len / 2];
+
+        for (int i = 0; i < ba.length; i++) {
+            int j = i * 2;
+            int t = Integer.parseInt(hex16Str.substring(j, j + 2), 16);
+            byte b = (byte) (t & 0xFF);
+            ba[i] = b;
+        }
+        return ba;
     }
 }

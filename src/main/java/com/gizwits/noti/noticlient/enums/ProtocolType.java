@@ -13,4 +13,5 @@ public enum ProtocolType {
     WiFi_GPRS,
     NB_IoT,
     LORA,
+    V2,
 }

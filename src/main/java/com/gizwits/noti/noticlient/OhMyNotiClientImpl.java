@@ -12,8 +12,10 @@ import com.gizwits.noti.noticlient.enums.ProtocolType;
 import com.gizwits.noti.noticlient.handler.NoDataChannelHandler;
 import com.gizwits.noti.noticlient.handler.PushEventMessageCountingHandler;
 import com.gizwits.noti.noticlient.handler.SnotiChannelHandler;
+import com.gizwits.noti.noticlient.handler.SnotiMetricsHandler;
 import com.gizwits.noti.noticlient.util.CommandUtils;
 import com.gizwits.noti.noticlient.util.ControlUtils;
+import com.gizwits.noti.noticlient.util.UniqueArrayBlockingQueue;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
@@ -36,7 +38,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.gizwits.noti.noticlient.bean.SnotiConstants.STR_DELIVERY_ID;
+
 /**
+ * Snoti客户端实现
+ *
  * @author Jcxcc
  * @since 1.0
  */
@@ -83,7 +89,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                                 if (!future.isSuccess()) {
                                     log.warn("回复ack失败, 即将返回ack回复队列重试. [{}]", ackMessage);
                                     ackReplyQueue.put(ackMessage);
-                                    log.info("返回ack回复队列成功. [{}]", ackMessage);
+                                    log.info("重新放入ack回复队列成功. [{}]", ackMessage);
                                 } else {
                                     if (log.isDebugEnabled()) {
                                         log.debug("回复ack成功. [{}]", ackMessage);
@@ -103,6 +109,8 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                                 channel.writeAndFlush(controlOrder).addListener(future -> {
                                     if (!future.isSuccess()) {
                                         log.warn("下发控制指令失败. [{}]", controlOrder);
+                                        controlQueue.put(controlOrder);
+                                        log.info("重新放入控制队列成功. [{}]", controlOrder);
                                     } else {
                                         if (log.isDebugEnabled()) {
                                             log.debug("下发控制指令成功. [{}]", controlOrder);
@@ -135,7 +143,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
         try {
             JSONObject json = receiveQueue.take();
 
-            String ackMessage = CommandUtils.getEventAckMessage(json.get(CommandUtils.STR_DELIVERY_ID));
+            String ackMessage = CommandUtils.getEventAckMessage(json.get(STR_DELIVERY_ID));
             sendAckMessage(ackMessage);
             return json;
 
@@ -192,14 +200,8 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     }
 
     @Override
-    public boolean control(String productKey, String mac, String did, Object raw) {
-        return this.control(ControlUtils.switchControl(productKey, mac, did, raw), false);
-    }
-
-    @Override
-    public boolean control(String productKey, String mac, String did, Map<String, Object> dataPoint) {
-        ProtocolType protocolType = productKeyProtocolMap.getOrDefault(productKey, ProtocolType.WiFi_GPRS);
-        return this.control(ControlUtils.switchControl(StringUtils.EMPTY, productKey, mac, did, dataPoint, protocolType), false);
+    public boolean control(String msgId, String productKey, String mac, String did, Object raw) {
+        return this.control(ControlUtils.switchControl(msgId, productKey, mac, did, raw), true);
     }
 
     @Override
@@ -211,19 +213,13 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
 
     @Override
     public boolean tryControl(String productKey, String mac, String did, Object raw) {
-        return this.control(ControlUtils.switchControl(productKey, mac, did, raw), true);
+        return this.control(ControlUtils.switchControl(StringUtils.EMPTY, productKey, mac, did, raw), true);
     }
 
     @Override
     public boolean tryControl(String productKey, String mac, String did, Map<String, Object> dataPoint) {
         ProtocolType protocolType = productKeyProtocolMap.getOrDefault(productKey, ProtocolType.WiFi_GPRS);
         return this.control(ControlUtils.switchControl(StringUtils.EMPTY, productKey, mac, did, dataPoint, protocolType), true);
-    }
-
-    @Override
-    public OhMyNotiClientImpl setHost(String host) {
-        this.snotiConfig.setHost(host);
-        return this;
     }
 
     @Override
@@ -238,12 +234,6 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     }
 
     @Override
-    public OhMyNotiClientImpl setPort(int port) {
-        this.snotiConfig.setPort(port);
-        return this;
-    }
-
-    @Override
     public OhMyNotiClientImpl addLoginAuthorizes(AuthorizationData... authorizes) {
         if (Objects.isNull(loginCommand)) {
             synchronized (OhMyNotiClientImpl.class) {
@@ -254,8 +244,9 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
         }
 
         loginCommand.addLoginAuthorizes(authorizes);
-        loginCommand.setPrefetch_count(this.snotiConfig.getPrefetchCount());
+        loginCommand.setPrefetchCount(this.snotiConfig.getPrefetchCount());
 
+        //初始化产品协议map, 方便构建控制指令
         productKeyProtocolMap = loginCommand.getData().stream()
                 .collect(Collectors.toMap(AuthorizationData::getProduct_key, AuthorizationData::getProtocolType));
         return this;
@@ -268,7 +259,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
 
         this.channel.close();
         this.callback.reload(authorizes);
-        log.info("noti client about to reload...");
+        log.info("snoti客户端即将重新加载登录信息 ...");
         return this;
     }
 
@@ -282,7 +273,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
         }
 
         this.loginState = loginState;
-        log.info("设置客户端登录状态成功.[{}]", loginState);
+        log.info("客户端登录状态为[{}]", loginState);
     }
 
     @Override
@@ -346,6 +337,11 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                         p.addLast(new NoDataChannelHandler(noDataWaringMinutes, OhMyNotiClientImpl.this.getCallback()));
                     }
 
+                    if (OhMyNotiClientImpl.this.snotiConfig.getWithMetrics()) {
+                        log.info("使用snoti指标统计.");
+                        p.addLast(new SnotiMetricsHandler());
+                    }
+
                     if (OhMyNotiClientImpl.this.snotiConfig.getEnableMessageCounting()) {
                         //开启推送消息计数
                         log.info("设置snoti客户端推送消息计数器.");
@@ -354,7 +350,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                 }
             };
 
-            this.bootstrap = automaticallyGeneratedBootstrap()
+            this.bootstrap = automaticallyGeneratedBootstrap(this.snotiConfig.getUseEpoll())
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                     .option(ChannelOption.SO_KEEPALIVE, true)
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 1000 * 3)
@@ -363,7 +359,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                     .handler(handler);
             this.doConnect();
         } catch (Exception e) {
-            log.error("noti startup error!");
+            log.error("snoti客户端启动错误!!!");
 
             throw new RuntimeException(e);
         }
@@ -377,11 +373,11 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
         }
 
         if (Objects.isNull(this.ackReplyQueue)) {
-            this.ackReplyQueue = new ArrayBlockingQueue<>(this.snotiConfig.getAckReplyQueueCapacity());
+            this.ackReplyQueue = new UniqueArrayBlockingQueue<>(this.snotiConfig.getAckReplyQueueCapacity());
         }
 
         if (Objects.isNull(this.controlQueue)) {
-            this.controlQueue = new ArrayBlockingQueue<>(this.snotiConfig.getControlQueueCapacity());
+            this.controlQueue = new UniqueArrayBlockingQueue<>(this.snotiConfig.getControlQueueCapacity());
         }
     }
 
@@ -400,12 +396,12 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
             future.addListener((ChannelFutureListener) futureListener -> {
                 if (futureListener.isSuccess()) {
                     this.channel = futureListener.channel();
-                    log.info("connect to noti server successfully!");
+                    log.info("连接到snoti服务器成功, 即将发起登录请求. host[{}] port[{}]", this.snotiConfig.getHost(), this.snotiConfig.getPort());
 
                 } else {
 
                     Long reConnectSeconds = this.snotiConfig.getReConnectSeconds();
-                    log.warn("连接snoti服务器失败, [{}]秒后尝试重连.", reConnectSeconds);
+                    log.warn("连接snoti服务器失败, [{}]秒后尝试重连. host[{}] port[{}]", reConnectSeconds, this.snotiConfig.getHost(), this.snotiConfig.getPort());
                     futureListener.channel().eventLoop().schedule(this::doConnect, reConnectSeconds, TimeUnit.SECONDS);
                 }
 
@@ -429,9 +425,9 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
      */
     @Override
     public void doStop() {
-        log.warn("stopping connect...");
+        log.warn("正在停止snoti客户端...");
         this.stopComponents();
         this.callback.stop();
-        log.warn("the client is stop!!!");
+        log.warn("停止snoti客户端完成!!!");
     }
 }

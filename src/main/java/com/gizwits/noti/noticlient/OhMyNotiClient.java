@@ -5,11 +5,12 @@ import com.gizwits.noti.noticlient.bean.req.body.AuthorizationData;
 import com.gizwits.noti.noticlient.config.SnotiCallback;
 import com.gizwits.noti.noticlient.config.SnotiConfig;
 import com.gizwits.noti.noticlient.enums.LoginState;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
 
 /**
- * The interface Oh my noti client.
+ * Snoti客户端接口
  *
  * @author Jcxcc
  * @since 1.0
@@ -32,19 +33,27 @@ public interface OhMyNotiClient {
     boolean storeInformation(JSONObject jsonMessage);
 
     /**
-     * Gets login order.
+     * 添加登录信息
+     *
+     * @param authorizes the authorizes
+     * @return the oh my noti client
+     */
+    OhMyNotiClient addLoginAuthorizes(AuthorizationData... authorizes);
+
+    /**
+     * 获取登录指令
      *
      * @return the login order
      */
     String getLoginOrder();
 
     /**
-     * Do start.
+     * 建立连接
      */
-    void doStart();
+    void doConnect();
 
     /**
-     * Reload oh my noti client.
+     * 重新加载登录信息
      *
      * @param authorizes the authorizes
      * @return the oh my noti client
@@ -52,17 +61,17 @@ public interface OhMyNotiClient {
     OhMyNotiClient reload(AuthorizationData... authorizes);
 
     /**
-     * Do connect.
+     * 开始工作
      */
-    void doConnect();
+    void doStart();
 
     /**
-     * Do stop.
+     * 停止工作
      */
     void doStop();
 
     /**
-     * Switch push message.
+     * 打开推送消息开关
      */
     void switchPushMessage();
 
@@ -75,33 +84,9 @@ public interface OhMyNotiClient {
     OhMyNotiClient setSnotiConfig(SnotiConfig snotiConfig);
 
     /**
-     * 设置端口
+     * 设置snoti回调
      * <p>
-     * 在以后的版本中会丢弃
-     * 建议通过 snotiConfig 来设置 port. {@link SnotiConfig#setPort(Integer)}
-     *
-     * @param port the port
-     * @return the port
-     * @see #setSnotiConfig(SnotiConfig) #setSnotiConfig(SnotiConfig)#setSnotiConfig(SnotiConfig)
-     */
-    @Deprecated
-    OhMyNotiClient setPort(int port);
-
-    /**
-     * 设置主机
-     * <p>
-     * 在以后的版本中会丢弃
-     * 建议通过 snotiConfig 来设置host. {@link SnotiConfig#setHost(String)}
-     *
-     * @param host the host
-     * @return the host
-     * @see #setSnotiConfig(SnotiConfig) #setSnotiConfig(SnotiConfig)#setSnotiConfig(SnotiConfig)
-     */
-    @Deprecated
-    OhMyNotiClient setHost(String host);
-
-    /**
-     * Sets callback.
+     * 注意不要在回调信息中执行类似while(true)的代码
      *
      * @param callback the callback
      * @return the callback
@@ -109,28 +94,22 @@ public interface OhMyNotiClient {
     OhMyNotiClient setCallback(SnotiCallback callback);
 
     /**
-     * Gets callback.
+     * 获取snoti回调
      *
      * @return the callback
      */
     SnotiCallback getCallback();
 
     /**
-     * Add login authorizes oh my noti client.
-     *
-     * @param authorizes the authorizes
-     * @return the oh my noti client
-     */
-    OhMyNotiClient addLoginAuthorizes(AuthorizationData... authorizes);
-
-    /**
-     * Receive message json object.
+     * 接受消息
      *
      * @return the json object
      */
     JSONObject receiveMessage();
 
     /**
+     * 阻塞式发送控制指令
+     * <p>
      * V4 产品自定义协议格式，填写 write
      * 当使用通用数据点透传指令时，Raw 指令以 0x05 开头
      *
@@ -140,7 +119,9 @@ public interface OhMyNotiClient {
      * @param raw        the raw
      * @return the boolean
      */
-    boolean control(String productKey, String mac, String did, Object raw);
+    default boolean control(String productKey, String mac, String did, Object raw) {
+        return this.control(StringUtils.EMPTY, productKey, mac, did, raw);
+    }
 
     /**
      * V4 产品数据点协议格式，填写write_attrs
@@ -151,10 +132,25 @@ public interface OhMyNotiClient {
      * @param dataPoint  the data point
      * @return the boolean
      */
-    boolean control(String productKey, String mac, String did, Map<String, Object> dataPoint);
+    default boolean control(String productKey, String mac, String did, Map<String, Object> dataPoint) {
+        //设置msgId为空, 则会自动生成msgId
+        return this.control(StringUtils.EMPTY, productKey, mac, did, dataPoint);
+    }
 
     /**
-     * Control boolean.
+     * 阻塞式发送控制指令
+     *
+     * @param msgId      the msg id
+     * @param productKey the product key
+     * @param mac        the mac
+     * @param did        the did
+     * @param raw        the raw
+     * @return the boolean
+     */
+    boolean control(String msgId, String productKey, String mac, String did, Object raw);
+
+    /**
+     * 阻塞式发送控制指令
      *
      * @param msgId      the msg id
      * @param productKey the product key
