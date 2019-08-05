@@ -12,6 +12,7 @@ import com.gizwits.noti.noticlient.enums.ProtocolType;
 import com.gizwits.noti.noticlient.handler.NoDataChannelHandler;
 import com.gizwits.noti.noticlient.handler.PushEventMessageCountingHandler;
 import com.gizwits.noti.noticlient.handler.SnotiChannelHandler;
+import com.gizwits.noti.noticlient.handler.SnotiMetricsHandler;
 import com.gizwits.noti.noticlient.util.CommandUtils;
 import com.gizwits.noti.noticlient.util.ControlUtils;
 import com.gizwits.noti.noticlient.util.UniqueArrayBlockingQueue;
@@ -40,6 +41,8 @@ import java.util.stream.Collectors;
 import static com.gizwits.noti.noticlient.bean.SnotiConstants.STR_DELIVERY_ID;
 
 /**
+ * Snoti客户端实现
+ *
  * @author Jcxcc
  * @since 1.0
  */
@@ -197,14 +200,8 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     }
 
     @Override
-    public boolean control(String productKey, String mac, String did, Object raw) {
-        return this.control(ControlUtils.switchControl(productKey, mac, did, raw), false);
-    }
-
-    @Override
-    public boolean control(String productKey, String mac, String did, Map<String, Object> dataPoint) {
-        ProtocolType protocolType = productKeyProtocolMap.getOrDefault(productKey, ProtocolType.WiFi_GPRS);
-        return this.control(ControlUtils.switchControl(StringUtils.EMPTY, productKey, mac, did, dataPoint, protocolType), false);
+    public boolean control(String msgId, String productKey, String mac, String did, Object raw) {
+        return this.control(ControlUtils.switchControl(msgId, productKey, mac, did, raw), true);
     }
 
     @Override
@@ -216,19 +213,13 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
 
     @Override
     public boolean tryControl(String productKey, String mac, String did, Object raw) {
-        return this.control(ControlUtils.switchControl(productKey, mac, did, raw), true);
+        return this.control(ControlUtils.switchControl(StringUtils.EMPTY, productKey, mac, did, raw), true);
     }
 
     @Override
     public boolean tryControl(String productKey, String mac, String did, Map<String, Object> dataPoint) {
         ProtocolType protocolType = productKeyProtocolMap.getOrDefault(productKey, ProtocolType.WiFi_GPRS);
         return this.control(ControlUtils.switchControl(StringUtils.EMPTY, productKey, mac, did, dataPoint, protocolType), true);
-    }
-
-    @Override
-    public OhMyNotiClientImpl setHost(String host) {
-        this.snotiConfig.setHost(host);
-        return this;
     }
 
     @Override
@@ -243,12 +234,6 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     }
 
     @Override
-    public OhMyNotiClientImpl setPort(int port) {
-        this.snotiConfig.setPort(port);
-        return this;
-    }
-
-    @Override
     public OhMyNotiClientImpl addLoginAuthorizes(AuthorizationData... authorizes) {
         if (Objects.isNull(loginCommand)) {
             synchronized (OhMyNotiClientImpl.class) {
@@ -259,8 +244,9 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
         }
 
         loginCommand.addLoginAuthorizes(authorizes);
-        loginCommand.setPrefetch_count(this.snotiConfig.getPrefetchCount());
+        loginCommand.setPrefetchCount(this.snotiConfig.getPrefetchCount());
 
+        //初始化产品协议map, 方便构建控制指令
         productKeyProtocolMap = loginCommand.getData().stream()
                 .collect(Collectors.toMap(AuthorizationData::getProduct_key, AuthorizationData::getProtocolType));
         return this;
@@ -351,6 +337,11 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                         p.addLast(new NoDataChannelHandler(noDataWaringMinutes, OhMyNotiClientImpl.this.getCallback()));
                     }
 
+                    if (OhMyNotiClientImpl.this.snotiConfig.getWithMetrics()) {
+                        log.info("使用snoti指标统计.");
+                        p.addLast(new SnotiMetricsHandler());
+                    }
+
                     if (OhMyNotiClientImpl.this.snotiConfig.getEnableMessageCounting()) {
                         //开启推送消息计数
                         log.info("设置snoti客户端推送消息计数器.");
@@ -434,9 +425,9 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
      */
     @Override
     public void doStop() {
-        log.warn("stopping connect...");
+        log.warn("正在停止snoti客户端...");
         this.stopComponents();
         this.callback.stop();
-        log.warn("the client is stop!!!");
+        log.warn("停止snoti客户端完成!!!");
     }
 }

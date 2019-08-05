@@ -1,6 +1,7 @@
 package com.gizwits.noti.noticlient.bean.req.body;
 
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.annotation.JSONField;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import lombok.AllArgsConstructor;
@@ -25,14 +26,15 @@ import java.util.stream.Stream;
 public final class LoginReqCommandBody extends AbstractCommandBody {
 
     public LoginReqCommandBody() {
-        this.prefetch_count = 50;
+        this.prefetchCount = 50;
     }
 
     /**
      * 0 < prefetch_count <= 32767, 表示推送没有 ACK 的消息
      * 的最大个数，可不填，默认值是 50
      */
-    private int prefetch_count;
+    @JSONField(name = "prefetch_count")
+    private int prefetchCount;
 
     /**
      * 产品登录验证信息

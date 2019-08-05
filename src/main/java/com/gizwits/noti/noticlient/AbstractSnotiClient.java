@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The type Abstract snoti client.
+ * Snoti客户端
  *
  * @author Jcxcc
  * @since 1.0
@@ -65,8 +65,6 @@ public abstract class AbstractSnotiClient {
 
     /**
      * 获取处理线程数
-     * <p>
-     * 最少两个, 其中一个用来写控制指令
      *
      * @return the core size
      */

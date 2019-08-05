@@ -83,6 +83,9 @@ public class ControlUtils {
      * @return 控制体, 通过getOrder()方法获取具体的控制指令
      */
     public static AbstractCommandBody switchControl(String msgId, String productKey, String mac, String did, Map<String, Object> dataPoint, ProtocolType protocolType) {
+        //如果自定义msgId为空则使用云端的规范生成msgId
+        msgId = StringUtils.isBlank(msgId) ? getCtrlMsgId() : msgId;
+
         switch (protocolType) {
             case NB_IoT:
                 InternalControlReqCommandBody nbBody = getInternalControlReqCommandBody(msgId, productKey, mac, did, dataPoint);
@@ -100,16 +103,16 @@ public class ControlUtils {
                 ctrlV2Body.setPayload(ctrlV2Body.getPayload().setAttrs(JSONObject.parseObject(JSONObject.toJSONString(dataPoint))));
                 return new ControlV2ReqCommandBody()
                         .setControlBody(Collections.singletonList(ctrlV2Body))
-                        .setMsgId(getCtrlMsgId());
+                        .setMsgId(msgId);
 
-            //默认用WiFi GRPS协议
+            //默认用WiFi GPRS协议
             case WiFi_GPRS:
             default:
                 ControlReqCommandBody.ControlBody controlBody = getControlBody(productKey, mac, did, NotiReqControlType.write_attrs);
                 controlBody.setPayload(controlBody.getPayload().setAttrs(JSONObject.parseObject(JSONObject.toJSONString(dataPoint))));
                 return new ControlReqCommandBody()
                         .setControlBody(Collections.singletonList(controlBody))
-                        .setMsgId(getCtrlMsgId());
+                        .setMsgId(msgId);
         }
     }
 
@@ -130,11 +133,7 @@ public class ControlUtils {
         JSONObject json = JSONObject.parseObject(JSONObject.toJSONString(dataPoint, SerializerFeature.WriteMapNullValue, SerializerFeature.WriteNullStringAsEmpty));
 
         InternalControlReqCommandBody body = new InternalControlReqCommandBody(productKey, mac, did, json);
-        if (StringUtils.isNoneBlank(msgId)) {
-            body.setMsgId(msgId);
-        } else {
-            body.setMsgId(getCtrlMsgId());
-        }
+        body.setMsgId(msgId);
 
         return body;
     }
@@ -144,13 +143,14 @@ public class ControlUtils {
      * Switch control abstract command body.
      * 当前nb-IoT不支持数据点
      *
+     * @param msgId      the msg id
      * @param productKey the product key
      * @param mac        the mac
      * @param did        the did
      * @param raw        the raw
      * @return the abstract command body
      */
-    public static AbstractCommandBody switchControl(String productKey, String mac, String did, Object raw) {
+    public static AbstractCommandBody switchControl(String msgId, String productKey, String mac, String did, Object raw) {
         byte[] rawByteArray = null;
         int[] rawIntArray = null;
         if (raw instanceof byte[]) {
@@ -199,6 +199,6 @@ public class ControlUtils {
         controlBody.setPayload(controlBody.getPayload().setRaw(rawIntArray));
         return new ControlReqCommandBody()
                 .setControlBody(Collections.singletonList(controlBody))
-                .setMsgId(getCtrlMsgId());
+                .setMsgId(StringUtils.isBlank(msgId) ? getCtrlMsgId() : msgId);
     }
 }

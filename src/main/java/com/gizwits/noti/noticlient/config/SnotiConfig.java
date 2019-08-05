@@ -14,22 +14,31 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class SnotiConfig {
 
+    /**
+     * Instantiates a new Snoti config.
+     */
     public SnotiConfig() {
+        //基本信息
         this.host = "snoti.gizwits.com";
         this.port = 2017;
         this.prefetchCount = 50;
         this.receiveQueueCapacity = 64;
         this.controlQueueCapacity = 128;
+        this.reConnectSeconds = 20L;
+        this.heartbeatIntervalSeconds = 60L;
+        //基本信息end
 
+        //无数据检查
         this.noDataWarningMinutes = 2;
         this.enableCheckNoData = true;
+        //无数据检查end
 
-        this.reConnectSeconds = 20L;
-
-        this.heartbeatIntervalSeconds = 60L;
-
+        //指标
         this.enableMessageCounting = false;
+        this.withMetrics = false;
+        //指标end
 
+        //其他配置
         this.useEpoll = true;
     }
 
@@ -152,17 +161,31 @@ public class SnotiConfig {
 
     /**
      * 是否开启消息计数
-     * 默认不开启{@link #SnotiConfig()}
+     * 默认关闭{@link #SnotiConfig()}
+     * <p>
+     * 1.8.7之后推荐使用metrics, 通过{@link #setWithMetrics(Boolean)}打开
      */
+    @Deprecated
     private Boolean enableMessageCounting;
 
     /**
-     * 是否使用 epoll
+     * 是否使用指标
      * <p>
+     * 默认否{@link #SnotiConfig()}
+     */
+    private Boolean withMetrics;
+
+    /**
+     * 是否使用 epoll
      * 默认为true{@link #SnotiConfig()}
+     * <p>
      * useEpoll = true 时, 意味着:
-     * 如果系统支持使用epoll则优先使用epoll {@link AbstractSnotiClient#automaticallyGeneratedBootstrap(boolean)}
-     * useEpoll = false 时, 则不会使用epoll
+     * 如果系统支持使用epoll则优先使用epoll, 具体实现见 {@link AbstractSnotiClient#automaticallyGeneratedBootstrap(boolean)}.
+     * 有时候{@link AbstractSnotiClient#canUseEpoll()} 为true时, 由于系统环境的原因在调用epoll的时候失败, 此时建议设置为false.
+     * </p>
+     * <p>
+     * useEpoll = false 时, 则不会使用epoll.
+     * </p>
      */
     private Boolean useEpoll;
 }
