@@ -148,7 +148,16 @@ public class NotiClientApplicationTests {
   - [x] 中控添加子设备
   - [x] 中控删除子设备
   
-## CHANGELOG
+## CHANGELOG  
+1.8.7-RELEASE 发布日期: 2019-07-22        
+1. 更新文档中maven仓库描述
+2. 客户端生成, 优先使用epoll, 失败则使用 Java NIO
+3. 监控指标支持    
+
+BUG:   
+1. 修复KV设备控制不支持自定义messageId的问题
+2. 修复网络环境不好的情况下回复重复ack的问题   
+
 1.8.6-RELEASE 发布日期: 2019-06-04      
 1. 推送事件添加 msgId 字段  
 2. 数据点控制支持自定义msgId
