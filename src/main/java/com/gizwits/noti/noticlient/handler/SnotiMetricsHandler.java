@@ -1,8 +1,8 @@
 package com.gizwits.noti.noticlient.handler;
 
-import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Slf4jReporter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
  * snoti指标处理器
  *
  * @author Jcxcc
- * @since 1.0
+ * @since 1.8.7
  */
 @Slf4j
 public class SnotiMetricsHandler extends SimpleChannelInboundHandler<String> {
@@ -28,15 +28,16 @@ public class SnotiMetricsHandler extends SimpleChannelInboundHandler<String> {
     public SnotiMetricsHandler() {
         super();
         MetricRegistry metricRegistry = new MetricRegistry();
-        ConsoleReporter consoleReporter = ConsoleReporter.forRegistry(metricRegistry)
+        final Slf4jReporter reporter = Slf4jReporter.forRegistry(metricRegistry)
+                .outputTo(log)
                 .convertRatesTo(TimeUnit.SECONDS)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .convertDurationsTo(TimeUnit.SECONDS)
                 .build();
 
         pushEventMsgMeter = metricRegistry.meter("push_event_msg_meter");
         log.info("初始化snoti指标成功.");
 
-        consoleReporter.start(15, 30, TimeUnit.SECONDS);
+        reporter.start(15, 30, TimeUnit.SECONDS);
     }
 
     @Override

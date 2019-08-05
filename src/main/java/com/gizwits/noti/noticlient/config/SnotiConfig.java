@@ -35,7 +35,7 @@ public class SnotiConfig {
 
         //指标
         this.enableMessageCounting = false;
-        this.withMetrics = true;
+        this.withMetrics = false;
         //指标end
 
         //其他配置
@@ -171,7 +171,7 @@ public class SnotiConfig {
     /**
      * 是否使用指标
      * <p>
-     * 默认是{@link #SnotiConfig()}
+     * 默认否{@link #SnotiConfig()}
      */
     private Boolean withMetrics;
 
