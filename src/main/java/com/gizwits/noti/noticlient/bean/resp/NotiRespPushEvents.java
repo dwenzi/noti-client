@@ -20,6 +20,7 @@ public enum NotiRespPushEvents {
     DOWNLOAD("device_file_download", "设备大文件下载通知"),
     APP_TO_DEV_KV("app2dev_kv", "app控制设备-数据点"),
     APP_TO_DEV_RAW("app2dev_raw", "app控制设备-透传"),
+    GPS_KV("device_gps_kv", "GPS地理位置信息"),
     //设备回调当作推送事件
     CONTROL_CALLBACK("remote_control_res", "设备控制回调"),
     INVALID("invalid", "无效"),

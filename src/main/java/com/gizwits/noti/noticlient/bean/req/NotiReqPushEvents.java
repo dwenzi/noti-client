@@ -14,6 +14,7 @@ public enum NotiReqPushEvents {
     OFFLINE("device.offline", "下线"),
     RAW("device.status.raw", "透传"),
     KV("device.status.kv", "数据点"),
+    GPS_KV("device.gps.kv", "GPS地理位置信息"),
     BIND("device.bind", "设备绑定"),
     UNBIND("device.unbind", "设备解绑"),
     RESET("device.reset", "设备重置"),

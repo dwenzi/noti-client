@@ -149,6 +149,9 @@ public class NotiClientApplicationTests {
   - [x] 中控删除子设备
   
 ## CHANGELOG  
+1.8.8-RELEASE 发布日期: 2019-08-06  
+1. GPS事件支持
+        
 1.8.7-RELEASE 发布日期: 2019-07-22        
 1. 更新文档中maven仓库描述
 2. 客户端生成, 优先使用epoll, 失败则使用 Java NIO
