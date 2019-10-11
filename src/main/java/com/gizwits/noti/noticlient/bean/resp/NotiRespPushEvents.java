@@ -23,6 +23,8 @@ public enum NotiRespPushEvents {
     GPS_KV("device_gps_kv", "GPS地理位置信息"),
     //设备回调当作推送事件
     CONTROL_CALLBACK("remote_control_res", "设备控制回调"),
+    SUBSCRIBE_CALLBACK("subscribe_res", "订阅产品数据回调"),
+    UNSUBSCRIBE_CALLBACK("unsubscribe_res", "取消订阅产品数据回调"),
     INVALID("invalid", "无效"),
     ;
 
