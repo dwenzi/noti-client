@@ -44,7 +44,7 @@
     </dependencyManagement>
 
     <properties>
-        <snoti.client.version>1.8.8</snoti.client.version>
+        <snoti.client.version>1.8.9</snoti.client.version>
         <project.release.version>${snoti.client.version}-SNAPSHOT</project.release.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
