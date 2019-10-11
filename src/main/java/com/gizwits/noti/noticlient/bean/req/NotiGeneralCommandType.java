@@ -10,6 +10,10 @@ import lombok.Getter;
 public enum NotiGeneralCommandType {
     login_req("login_req", "", "登录请求"),
     login_res("login_res", "", "登录回复"),
+    subscribe_req("subscribe_req", "", "订阅请求"),
+    subscribe_res("subscribe_res", "", "订阅回复"),
+    unsubscribe_req("unsubscribe_req", "", "取消订阅请求"),
+    unsubscribe_res("unsubscribe_res", "", "取消订阅回复"),
     event_push("event_push", "", "事件推送"),
     event_ack("event_ack", "", "ack事件回复"),
     remote_control_req("remote_control_req", "", "远程控制设备请求v1版本"),

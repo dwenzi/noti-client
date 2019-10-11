@@ -147,6 +147,7 @@ public class NotiClientApplicationTests {
   - [x] 透传
   - [x] 中控添加子设备
   - [x] 中控删除子设备
+  - [x] GPS事件
   
 ## CHANGELOG  
 1.8.8-RELEASE 发布日期: 2019-08-06  

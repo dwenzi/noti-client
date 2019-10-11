@@ -109,13 +109,30 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
                     }
                     break;
 
+                case subscribe_res:
+                    boolean storeSubscribeSuccessful = ohMyNotiClient.storeInformation(jsonObject);
+                    //存储信息成功
+                    if (storeSubscribeSuccessful) {
+                    } else {
+                        log.error("存储消息失败. 消息[{}]", jsonObject.toJSONString());
+                    }
+                    break;
+
+                case unsubscribe_res:
+                    boolean storeUnsubscribeSuccessful = ohMyNotiClient.storeInformation(jsonObject);
+                    //存储信息成功
+                    if (storeUnsubscribeSuccessful) {
+                    } else {
+                        log.error("存储消息失败. 消息[{}]", jsonObject.toJSONString());
+                    }
+                    break;
+
                 case invalid_msg:
                 default:
                     log.info("无效消息:[{}]", message);
                     break;
 
             }
-
         }
     }
 

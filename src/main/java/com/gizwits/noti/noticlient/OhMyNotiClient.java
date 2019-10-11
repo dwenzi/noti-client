@@ -7,6 +7,7 @@ import com.gizwits.noti.noticlient.config.SnotiConfig;
 import com.gizwits.noti.noticlient.enums.LoginState;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -39,6 +40,33 @@ public interface OhMyNotiClient {
      * @return the oh my noti client
      */
     OhMyNotiClient addLoginAuthorizes(AuthorizationData... authorizes);
+
+    /**
+     * Subscribe oh my noti client.
+     *
+     * @param authorizes the authorizes
+     * @return the oh my noti client
+     */
+    OhMyNotiClient subscribe(AuthorizationData... authorizes);
+
+    /**
+     * Unsubscribe oh my noti client.
+     *
+     * @param authorizationData the authorization data
+     * @return the oh my noti client
+     */
+    default OhMyNotiClient unsubscribe(AuthorizationData... authorizationData) {
+        Arrays.asList(authorizationData).forEach(this::unsubscribe);
+        return this;
+    }
+
+    /**
+     * Unsubscribe oh my noti client.
+     *
+     * @param authorizationData the authorization data
+     * @return the oh my noti client
+     */
+    OhMyNotiClient unsubscribe(AuthorizationData authorizationData);
 
     /**
      * 获取登录指令

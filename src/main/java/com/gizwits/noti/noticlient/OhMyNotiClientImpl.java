@@ -1,9 +1,7 @@
 package com.gizwits.noti.noticlient;
 
 import com.alibaba.fastjson.JSONObject;
-import com.gizwits.noti.noticlient.bean.req.body.AbstractCommandBody;
-import com.gizwits.noti.noticlient.bean.req.body.AuthorizationData;
-import com.gizwits.noti.noticlient.bean.req.body.LoginReqCommandBody;
+import com.gizwits.noti.noticlient.bean.req.body.*;
 import com.gizwits.noti.noticlient.config.SnotiCallback;
 import com.gizwits.noti.noticlient.config.SnotiConfig;
 import com.gizwits.noti.noticlient.config.SnotiTrustManager;
@@ -31,6 +29,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -243,12 +243,55 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
             }
         }
 
-        loginCommand.addLoginAuthorizes(authorizes);
         loginCommand.setPrefetchCount(this.snotiConfig.getPrefetchCount());
+        loginCommand.addLoginAuthorizes(authorizes);
 
         //初始化产品协议map, 方便构建控制指令
         productKeyProtocolMap = loginCommand.getData().stream()
                 .collect(Collectors.toMap(AuthorizationData::getProduct_key, AuthorizationData::getProtocolType));
+
+        final boolean loginSuccessful = Objects.equals(loginState, LoginState.LOGIN_SUCCESSFUL);
+        if (loginSuccessful) {
+            //当前状态为登录成功, 则调用动态添加
+            SubscribeReqCommandBody subscribeReqCommandBody = new SubscribeReqCommandBody();
+            subscribeReqCommandBody.setData(Arrays.asList(authorizes));
+            String order = subscribeReqCommandBody.getOrder();
+            log.info("当前客户端为登录成功, 开始调用动态登录. order[{}]", order);
+
+            sendControlOrder(order, false);
+        }
+
+        return this;
+    }
+
+    @Override
+    public OhMyNotiClient subscribe(AuthorizationData... authorizes) {
+        return addLoginAuthorizes(authorizes);
+    }
+
+    /**
+     * 取消订阅
+     *
+     * @param authorizationData the authorization data
+     * @return
+     */
+    @Override
+    public OhMyNotiClient unsubscribe(AuthorizationData authorizationData) {
+        String productKey = authorizationData.getProduct_key();
+        boolean pkIsInvalid = !productKeyProtocolMap.containsKey(productKey);
+        if (pkIsInvalid) {
+            log.warn("productKey 无效, 不需要执行取消订阅. productKey[{}]", productKey);
+            throw new IllegalArgumentException(String.format("请先登录productKey[%s]", productKey));
+        }
+
+        UnsubscribeReqCommandBody unsubscribeReqCommandBody = new UnsubscribeReqCommandBody();
+        unsubscribeReqCommandBody.setData(Collections.singletonList(authorizationData));
+        String unsubscribeReqCommandBodyOrder = unsubscribeReqCommandBody.getOrder();
+        log.info("发送取消订阅请求. {}", unsubscribeReqCommandBodyOrder);
+        sendControlOrder(unsubscribeReqCommandBodyOrder, false);
+
+        productKeyProtocolMap.remove(productKey);
+
         return this;
     }
 
