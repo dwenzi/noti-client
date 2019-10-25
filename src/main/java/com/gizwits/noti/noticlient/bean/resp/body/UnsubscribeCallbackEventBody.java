@@ -1,9 +1,11 @@
 package com.gizwits.noti.noticlient.bean.resp.body;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import com.gizwits.noti.noticlient.bean.resp.NotiRespPushEvents;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.apache.commons.lang3.BooleanUtils;
+
+import java.util.List;
 
 /**
  * 取消订阅回调
@@ -14,37 +16,22 @@ import org.apache.commons.lang3.BooleanUtils;
 @Data
 @EqualsAndHashCode(callSuper = false)
 public class UnsubscribeCallbackEventBody extends AbstractPushEventBody {
-
-    /**
-     * data : {"result":true,"msg":"ok"}
-     * cmd : subscribe_res
-     */
-    private DataBean data;
-
-    /**
-     * 操作成功
-     *
-     * @return the boolean
-     */
-    public boolean successful() {
-        return BooleanUtils.isTrue(this.data.getResult());
-    }
+    private Boolean result;
+    private String msg;
+    private List<DataBean> data;
 
     @Override
     public String pushEvent() {
         return NotiRespPushEvents.UNSUBSCRIBE_CALLBACK.getCode();
     }
 
-    /**
-     * The type Data bean.
-     */
     @Data
     public static class DataBean {
-        /**
-         * result : true
-         * msg : ok
-         */
-        private Boolean result;
-        private String msg;
+        @JSONField(name = "product_key")
+        private String productKey;
+        private String subkey;
+        private String auth_id;
+        private String auth_secret;
+        private List<String> events;
     }
 }
