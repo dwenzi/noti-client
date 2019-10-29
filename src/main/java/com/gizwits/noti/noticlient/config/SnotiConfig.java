@@ -1,6 +1,8 @@
 package com.gizwits.noti.noticlient.config;
 
 import com.gizwits.noti.noticlient.AbstractSnotiClient;
+import com.gizwits.noti.noticlient.OhMyNotiClient;
+import com.gizwits.noti.noticlient.bean.req.body.LoginReqCommandBody;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -40,6 +42,7 @@ public class SnotiConfig {
 
         //其他配置
         this.useEpoll = true;
+        this.automaticConfirmation = true;
     }
 
     /**
@@ -188,4 +191,17 @@ public class SnotiConfig {
      * </p>
      */
     private Boolean useEpoll;
+
+    /**
+     * 自动确认
+     * 默认为true
+     * <p>
+     * 当true时,
+     * 通过使用 {@link OhMyNotiClient#receiveMessage()} 方法接受消息时会自动ack
+     * 当false时，
+     * 通过使用 {@link OhMyNotiClient#receiveMessage()} 方法接受消息时需要手动调用
+     * 注意, 如果此时没有手动回复ack. 当达到了 preFetch{@link LoginReqCommandBody#getPrefetchCount()}时,
+     * snoti服务端不会再推送消息.
+     */
+    private Boolean automaticConfirmation;
 }

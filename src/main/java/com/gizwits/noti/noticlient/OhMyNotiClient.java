@@ -1,14 +1,19 @@
 package com.gizwits.noti.noticlient;
 
 import com.alibaba.fastjson.JSONObject;
+import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import com.gizwits.noti.noticlient.bean.req.body.AuthorizationData;
+import com.gizwits.noti.noticlient.bean.resp.body.AbstractPushEventBody;
 import com.gizwits.noti.noticlient.config.SnotiCallback;
 import com.gizwits.noti.noticlient.config.SnotiConfig;
 import com.gizwits.noti.noticlient.enums.LoginState;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Map;
+
+import static com.gizwits.noti.noticlient.bean.SnotiConstants.STR_DELIVERY_ID;
 
 /**
  * Snoti客户端接口
@@ -216,4 +221,55 @@ public interface OhMyNotiClient {
      * @return the boolean
      */
     boolean tryControl(String productKey, String mac, String did, Map<String, Object> dataPoint);
+
+    /**
+     * Confirmation boolean.
+     *
+     * @param deliveryId the delivery id
+     * @return the boolean
+     */
+    boolean confirm(String deliveryId);
+
+    /**
+     * Confirmation boolean.
+     *
+     * @param json the message
+     * @return the boolean
+     */
+    default boolean confirm(JSONObject json) {
+        String cmd = json.getString("cmd");
+        boolean needAck = StringUtils.equals(cmd, NotiGeneralCommandType.event_push.getCode());
+        if (needAck) {
+            if (!json.containsKey(STR_DELIVERY_ID)) {
+                LoggerFactory.getLogger(OhMyNotiClient.class).warn("消息不含delivery id, 确认消息失败. {}", json);
+                return false;
+            }
+
+            return confirm(json.getString(STR_DELIVERY_ID));
+        }
+
+        return false;
+    }
+
+    /**
+     * Confirmation boolean.
+     *
+     * @param <B>  the type parameter
+     * @param body the body
+     * @return the boolean
+     */
+    default <B extends AbstractPushEventBody> boolean confirm(B body) {
+        String cmd = body.getCmd();
+        boolean needAck = StringUtils.equals(cmd, NotiGeneralCommandType.event_push.getCode());
+        String deliveryId = body.getDeliveryId();
+        if (needAck) {
+            if (StringUtils.isBlank(deliveryId)) {
+                LoggerFactory.getLogger(OhMyNotiClient.class).warn("delivery id为空, 确认消息失败. {}", body);
+                return false;
+            }
+            return confirm(deliveryId);
+        }
+
+        return false;
+    }
 }

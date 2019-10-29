@@ -1,6 +1,7 @@
 package com.gizwits.noti.noticlient;
 
 import com.alibaba.fastjson.JSONObject;
+import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import com.gizwits.noti.noticlient.bean.req.body.*;
 import com.gizwits.noti.noticlient.config.SnotiCallback;
 import com.gizwits.noti.noticlient.config.SnotiConfig;
@@ -37,8 +38,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static com.gizwits.noti.noticlient.bean.SnotiConstants.STR_DELIVERY_ID;
 
 /**
  * Snoti客户端实现
@@ -143,8 +142,14 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
         try {
             JSONObject json = receiveQueue.take();
 
-            String ackMessage = CommandUtils.getEventAckMessage(json.get(STR_DELIVERY_ID));
-            sendAckMessage(ackMessage);
+            String cmd = json.getString("cmd");
+            //推送事件才需要回复ack
+            boolean needAck = StringUtils.equals(cmd, NotiGeneralCommandType.event_push.getCode());
+            if (needAck && this.snotiConfig.getAutomaticConfirmation()) {
+                //推送事件自动回复ack
+                confirm(json);
+            }
+
             return json;
 
         } catch (InterruptedException e) {
@@ -152,14 +157,6 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
             return new JSONObject();
         }
 
-    }
-
-    private void sendAckMessage(String order) {
-        try {
-            ackReplyQueue.put(order);
-        } catch (Exception e) {
-            log.warn("ackMessage入队失败. ackMessage[{}] errorMsg[{}]", order, e.getMessage());
-        }
     }
 
     @Override
@@ -220,6 +217,19 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     public boolean tryControl(String productKey, String mac, String did, Map<String, Object> dataPoint) {
         ProtocolType protocolType = productKeyProtocolMap.getOrDefault(productKey, ProtocolType.WiFi_GPRS);
         return this.control(ControlUtils.switchControl(StringUtils.EMPTY, productKey, mac, did, dataPoint, protocolType), true);
+    }
+
+    @Override
+    public boolean confirm(String deliveryId) {
+        String eventAckMessage = CommandUtils.getEventAckMessage(deliveryId);
+        try {
+            ackReplyQueue.put(eventAckMessage);
+            return true;
+        } catch (Exception e) {
+            log.warn("ack message入队失败. ack message[{}] {}", eventAckMessage, e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 
     @Override
@@ -352,6 +362,13 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                 @Override
                 protected void initChannel(SocketChannel socketChannel) throws Exception {
 
+                    //check config
+                    Boolean automaticConfirmation = snotiConfig.getAutomaticConfirmation();
+                    if (!automaticConfirmation) {
+                        //手动回复
+                        log.info("手动回复已开启, 请在处理完消息后手动回复ack.");
+                    }
+
                     ChannelPipeline p = socketChannel.pipeline();
 
                     //ssl
@@ -413,14 +430,17 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     private void initQueue() {
         if (Objects.isNull(this.receiveQueue)) {
             this.receiveQueue = new ArrayBlockingQueue<>(this.snotiConfig.getReceiveQueueCapacity());
+            log.info("初始化消息接受队列成功.");
         }
 
         if (Objects.isNull(this.ackReplyQueue)) {
             this.ackReplyQueue = new UniqueArrayBlockingQueue<>(this.snotiConfig.getAckReplyQueueCapacity());
+            log.info("初始化ack队列成功.");
         }
 
         if (Objects.isNull(this.controlQueue)) {
             this.controlQueue = new UniqueArrayBlockingQueue<>(this.snotiConfig.getControlQueueCapacity());
+            log.info("初始化控制队列成功.");
         }
     }
 
