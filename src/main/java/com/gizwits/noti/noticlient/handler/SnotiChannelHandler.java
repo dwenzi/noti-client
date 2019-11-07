@@ -1,18 +1,25 @@
 package com.gizwits.noti.noticlient.handler;
 
 import com.alibaba.fastjson.JSONObject;
+import com.gizwits.noti.noticlient.AbstractSnotiClient;
 import com.gizwits.noti.noticlient.OhMyNotiClient;
 import com.gizwits.noti.noticlient.OhMyNotiClientImpl;
 import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
+import com.gizwits.noti.noticlient.bean.req.body.AbstractCommandBody;
+import com.gizwits.noti.noticlient.bean.req.body.LoginReqCommandBody;
+import com.gizwits.noti.noticlient.bean.req.body.SubscribeReqCommandBody;
 import com.gizwits.noti.noticlient.enums.LoginState;
 import com.gizwits.noti.noticlient.util.CommandUtils;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Collections;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * The type Client handler.
@@ -52,14 +59,7 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
 
             switch (notiGeneralCommandType) {
                 case event_push:
-                    boolean storeEventSuccessful = ohMyNotiClient.storeInformation(jsonObject);
-                    //存储信息成功
-                    if (storeEventSuccessful) {
-                        //消费端成功获取到消息才回复ack
-                    } else {
-                        log.error("存储消息失败. 消息[{}]", jsonObject.toJSONString());
-                    }
-
+                    storeMsg(jsonObject);
                     //交给下一个handler处理
                     ctx.fireChannelRead(message);
                     break;
@@ -75,6 +75,19 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
                         ohMyNotiClient.getCallback().loginSuccessful();
                         //登陆成功后才允许推送信息
                         ohMyNotiClient.switchPushMessage();
+
+                        //登陆成功, 开始准备订阅信息
+                        AbstractSnotiClient client = (AbstractSnotiClient) this.ohMyNotiClient;
+                        boolean smartLogin = BooleanUtils.isTrue(client.getSnotiConfig().getSmartLogin());
+                        if (smartLogin) {
+                            log.info("使用智能登陆, 开始准备订阅指令");
+                            CompletableFuture.runAsync(() ->
+                                    client.getLoginCommand().getData().stream()
+                                            .map(it -> new SubscribeReqCommandBody().setData(Collections.singletonList(it)))
+                                            .map(AbstractCommandBody::getOrder)
+                                            .forEach(client::sendMsg));
+                        }
+
                     } else {
                         log.warn("snoti客户端登录失败...");
                         String errorMessage = Optional.of(jsonObject)
@@ -90,49 +103,30 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
                     log.info("接收到服务器pong响应...");
                     break;
 
-
-                case remote_control_res:
-                    boolean storeControlRespSuccessful = ohMyNotiClient.storeInformation(jsonObject);
-                    //存储信息成功
-                    if (storeControlRespSuccessful) {
-                    } else {
-                        log.error("存储消息失败. 消息[{}]", jsonObject.toJSONString());
-                    }
-                    break;
-
-                case remote_control_v2_res:
-                    boolean storeControlV2RespSuccessful = ohMyNotiClient.storeInformation(jsonObject);
-                    //存储信息成功
-                    if (storeControlV2RespSuccessful) {
-                    } else {
-                        log.error("存储消息失败. 消息[{}]", jsonObject.toJSONString());
-                    }
-                    break;
-
                 case subscribe_res:
-                    boolean storeSubscribeSuccessful = ohMyNotiClient.storeInformation(jsonObject);
-                    //存储信息成功
-                    if (storeSubscribeSuccessful) {
-                    } else {
-                        log.error("存储消息失败. 消息[{}]", jsonObject.toJSONString());
-                    }
-                    break;
-
                 case unsubscribe_res:
-                    boolean storeUnsubscribeSuccessful = ohMyNotiClient.storeInformation(jsonObject);
-                    //存储信息成功
-                    if (storeUnsubscribeSuccessful) {
-                    } else {
-                        log.error("存储消息失败. 消息[{}]", jsonObject.toJSONString());
-                    }
-                    break;
+                case remote_control_res:
+                case remote_control_v2_res:
+                    storeMsg(jsonObject);
 
                 case invalid_msg:
                 default:
                     log.info("无效消息:[{}]", message);
                     break;
-
             }
+        }
+    }
+
+    private void storeMsg(JSONObject jsonObject) {
+        boolean storeControlRespSuccessful = ohMyNotiClient.storeInformation(jsonObject);
+        //存储信息成功
+        if (storeControlRespSuccessful) {
+            if (log.isDebugEnabled()) {
+                log.info("存储消息成功. 消息{}", jsonObject.toJSONString());
+            }
+
+        } else {
+            log.error("存储消息失败. 消息{}", jsonObject.toJSONString());
         }
     }
 
@@ -145,9 +139,25 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
-        log.debug("连接激活...");
+        log.debug("连接激活即将发起登陆信息...");
+        this.ohMyNotiClient.setLoginState(LoginState.LOGGING);
 
-        String loginOrder = this.ohMyNotiClient.getLoginOrder();
+        AbstractSnotiClient client = (AbstractSnotiClient) this.ohMyNotiClient;
+        boolean smartLogin = BooleanUtils.isTrue(client.getSnotiConfig().getSmartLogin());
+        if (smartLogin) {
+            //智能登陆
+            log.info("即将智能登陆...");
+            doSmartLogin(ctx, client);
+        } else {
+            //普通登陆
+            log.info("即将普通登陆...");
+            normalLogin(ctx, client);
+        }
+    }
+
+    private void normalLogin(ChannelHandlerContext ctx, AbstractSnotiClient client) {
+        LoginReqCommandBody loginCommand = client.getLoginCommand();
+        String loginOrder = loginCommand.getOrder();
         ctx.writeAndFlush(loginOrder).addListener(future -> {
             if (future.isSuccess()) {
                 log.info("发送登录指令成功. 登录指令[{}]", loginOrder);
@@ -157,7 +167,22 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
                 ctx.channel().close();
             }
         });
+    }
 
+    private void doSmartLogin(ChannelHandlerContext ctx, AbstractSnotiClient client) {
+        LoginReqCommandBody loginCommand = client.getLoginCommand();
+        //首先发送空的登陆信息，然后接收到登陆成功回调后再发起订阅
+        LoginReqCommandBody emptyCommandBody = new LoginReqCommandBody();
+        emptyCommandBody.setPrefetchCount(loginCommand.getPrefetchCount());
+        String order = emptyCommandBody.getOrder();
+        ctx.writeAndFlush(order).addListener(future -> {
+            if (!future.isSuccess()) {
+                log.warn("发送空登陆指令失败, 关闭连接以触发重连. 登陆指令 {}", order);
+                ctx.channel().close();
+            } else {
+                log.info("发送空登陆指令成功. 登陆指令 {}", order);
+            }
+        });
     }
 
     /**

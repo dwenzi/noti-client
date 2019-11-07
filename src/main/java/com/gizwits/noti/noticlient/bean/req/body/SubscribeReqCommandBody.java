@@ -6,6 +6,7 @@ import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
  * @since 1.0.0
  */
 @Data
+@Accessors(chain = true)
 @EqualsAndHashCode(callSuper = false)
 public class SubscribeReqCommandBody extends AbstractCommandBody {
 

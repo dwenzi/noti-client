@@ -153,6 +153,7 @@ public class NotiClientApplicationTests {
 1.8.9-RELEASE 发布日期: 2019-10-06  
 1. 动态订阅产品消息
 2. 手动确认消息
+3. 智能订阅
 
 1.8.8-RELEASE 发布日期: 2019-08-06  
 1. GPS事件支持

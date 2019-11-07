@@ -74,13 +74,6 @@ public interface OhMyNotiClient {
     OhMyNotiClient unsubscribe(AuthorizationData authorizationData);
 
     /**
-     * 获取登录指令
-     *
-     * @return the login order
-     */
-    String getLoginOrder();
-
-    /**
      * 建立连接
      */
     void doConnect();

@@ -1,5 +1,7 @@
 package com.gizwits.noti.noticlient;
 
+import com.gizwits.noti.noticlient.bean.req.body.LoginReqCommandBody;
+import com.gizwits.noti.noticlient.config.SnotiCallback;
 import com.gizwits.noti.noticlient.config.SnotiConfig;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.EventLoopGroup;
@@ -11,7 +13,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.NettyRuntime;
 import io.netty.util.internal.SystemPropertyUtil;
-import org.slf4j.Logger;
+import lombok.Getter;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -22,13 +24,35 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractSnotiClient {
 
-    static final Logger log = LoggerFactory.getLogger("snoti客户端");
-
+    /**
+     * The Callback.
+     */
+    protected SnotiCallback callback;
+    /**
+     * The Snoti config.
+     */
+    @Getter
     protected SnotiConfig snotiConfig;
+    /**
+     * The Login command.
+     */
+    @Getter
+    protected LoginReqCommandBody loginCommand;
 
+
+    /**
+     * Instantiates a new Abstract snoti client.
+     */
     public AbstractSnotiClient() {
         this.snotiConfig = new SnotiConfig();
     }
+
+    /**
+     * Send msg.
+     *
+     * @param msg the msg
+     */
+    public abstract void sendMsg(Object msg);
 
     /**
      * 是否可以使用epoll
@@ -49,15 +73,16 @@ public abstract class AbstractSnotiClient {
     /**
      * 自动生成bootstrap
      *
+     * @param useEpoll the use epoll
      * @return the bootstrap
      */
     public static Bootstrap automaticallyGeneratedBootstrap(final boolean useEpoll) {
         if (useEpoll && canUseEpoll()) {
-            log.info("生成epoll bootstrap");
+            LoggerFactory.getLogger("snoti client").info("生成epoll bootstrap");
             return generateBootstrap(new EpollEventLoopGroup(getCoreSize()), EpollSocketChannel.class);
 
         } else {
-            log.info("生成nio bootstrap");
+            LoggerFactory.getLogger("snoti client").info("生成nio bootstrap");
             return generateBootstrap(new NioEventLoopGroup(getCoreSize()), NioSocketChannel.class);
         }
     }

@@ -24,6 +24,7 @@ import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.net.ssl.SSLContext;
@@ -45,6 +46,7 @@ import java.util.stream.Collectors;
  * @author Jcxcc
  * @since 1.0
  */
+@Slf4j
 public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiClient {
 
     private BlockingQueue<JSONObject> receiveQueue;
@@ -55,15 +57,23 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     private Bootstrap bootstrap;
     private LoginState loginState = LoginState.NOT_LOGGED;
 
-    private LoginReqCommandBody loginCommand;
     private Map<String, ProtocolType> productKeyProtocolMap;
-
-    private SnotiCallback callback;
-
     private static final long DEFAULT_POLL_TIMEOUT_MS = 2;
 
     public OhMyNotiClientImpl() {
         super();
+    }
+
+    @Override
+    public void sendMsg(Object msg) {
+        String strMsg;
+        if (msg instanceof AbstractCommandBody) {
+            strMsg = ((AbstractCommandBody) msg).getOrder();
+        } else {
+            strMsg = String.valueOf(msg);
+        }
+
+        sendControlOrder(strMsg, false);
     }
 
     @Override
@@ -340,12 +350,6 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
         return false;
     }
 
-    @Override
-    public String getLoginOrder() {
-        setLoginState(LoginState.LOGGING);
-        return loginCommand.getOrder();
-    }
-
     /**
      * 开启客户端
      */
@@ -430,7 +434,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     private void initQueue() {
         if (Objects.isNull(this.receiveQueue)) {
             this.receiveQueue = new ArrayBlockingQueue<>(this.snotiConfig.getReceiveQueueCapacity());
-            log.info("初始化消息接受队列成功.");
+            log.info("初始化消息接收队列成功.");
         }
 
         if (Objects.isNull(this.ackReplyQueue)) {
