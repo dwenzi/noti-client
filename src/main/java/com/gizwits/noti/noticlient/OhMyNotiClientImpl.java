@@ -9,7 +9,6 @@ import com.gizwits.noti.noticlient.config.SnotiTrustManager;
 import com.gizwits.noti.noticlient.enums.LoginState;
 import com.gizwits.noti.noticlient.enums.ProtocolType;
 import com.gizwits.noti.noticlient.handler.NoDataChannelHandler;
-import com.gizwits.noti.noticlient.handler.PushEventMessageCountingHandler;
 import com.gizwits.noti.noticlient.handler.SnotiChannelHandler;
 import com.gizwits.noti.noticlient.handler.SnotiMetricsHandler;
 import com.gizwits.noti.noticlient.util.CommandUtils;
@@ -404,12 +403,6 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                     if (OhMyNotiClientImpl.this.snotiConfig.getWithMetrics()) {
                         log.info("使用snoti指标统计.");
                         p.addLast(new SnotiMetricsHandler());
-                    }
-
-                    if (OhMyNotiClientImpl.this.snotiConfig.getEnableMessageCounting()) {
-                        //开启推送消息计数
-                        log.info("设置snoti客户端推送消息计数器.");
-                        p.addLast(new PushEventMessageCountingHandler());
                     }
                 }
             };

@@ -36,7 +36,6 @@ public class SnotiConfig {
         //无数据检查end
 
         //指标
-        this.enableMessageCounting = false;
         this.withMetrics = false;
         //指标end
 
@@ -162,15 +161,6 @@ public class SnotiConfig {
      * 默认60s{@link #SnotiConfig()}
      */
     private Long heartbeatIntervalSeconds;
-
-    /**
-     * 是否开启消息计数
-     * 默认关闭{@link #SnotiConfig()}
-     * <p>
-     * 1.8.7之后推荐使用metrics, 通过{@link #setWithMetrics(Boolean)}打开
-     */
-    @Deprecated
-    private Boolean enableMessageCounting;
 
     /**
      * 是否使用指标
