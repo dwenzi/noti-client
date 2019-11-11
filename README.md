@@ -37,7 +37,16 @@
 </dependencies>
 ```
 
+
+
+### 结合 Spring Boot 使用
+
+见 [snoti-demo](https://github.com/smallCC/snoti-demo) .
+
+
+
 ### Hello World
+
 ```java
 package your_package_path.noticlient;
 
@@ -154,10 +163,12 @@ public class NotiClientApplicationTests {
 1. 动态订阅产品消息
 2. 手动确认消息
 3. 智能订阅
+4. 结合 spring-boot 使用的 [snoti-demo](https://github.com/smallCC/snoti-demo) .
 
 1.8.8-RELEASE 发布日期: 2019-08-06  
 1. GPS事件支持
         
+
 1.8.7-RELEASE 发布日期: 2019-07-22        
 1. 更新文档中maven仓库描述
 2. 客户端生成, 优先使用epoll, 失败则使用 Java NIO
