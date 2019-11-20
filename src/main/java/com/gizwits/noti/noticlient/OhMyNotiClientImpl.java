@@ -23,6 +23,7 @@ import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -383,8 +384,8 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
 
                     //编码
                     p.addLast(new LineBasedFrameDecoder(16384));
-                    p.addLast(new StringDecoder());
-                    p.addLast(new StringEncoder());
+                    p.addLast(new StringDecoder(CharsetUtil.UTF_8));
+                    p.addLast(new StringEncoder(CharsetUtil.UTF_8));
 
                     //心跳检查
                     Long heartbeatIntervalSeconds = OhMyNotiClientImpl.this.snotiConfig.getHeartbeatIntervalSeconds();
