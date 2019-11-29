@@ -55,7 +55,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
 
     private Channel channel;
     private Bootstrap bootstrap;
-    private LoginState loginState = LoginState.NOT_LOGGED;
+    private volatile LoginState loginState = LoginState.NOT_LOGGED;
 
     private Map<String, ProtocolType> productKeyProtocolMap;
     private static final long DEFAULT_POLL_TIMEOUT_MS = 2;
@@ -318,8 +318,11 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     @Override
     public synchronized OhMyNotiClientImpl reload(AuthorizationData... authorizes) {
         loginCommand = null;
+        //登陆状态设置为未登陆, 从而结束写数据
+        setLoginState(LoginState.NOT_LOGGED);
         addLoginAuthorizes(authorizes);
 
+        //关闭链接以重连
         this.channel.close();
         this.callback.reload(authorizes);
         log.info("snoti客户端即将重新加载登录信息 ...");

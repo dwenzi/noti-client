@@ -159,6 +159,10 @@ public class NotiClientApplicationTests {
   - [x] GPS事件
   
 ## CHANGELOG  
+1.9.0-RELEASE 发布日期: 2019-10-06  
+BUG：
+1. 修复 reload 时有可能写入繁忙
+
 1.8.9-RELEASE 发布日期: 2019-10-06  
 1. 动态订阅产品消息
 2. 手动确认消息
