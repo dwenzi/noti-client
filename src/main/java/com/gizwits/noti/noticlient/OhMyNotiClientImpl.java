@@ -268,7 +268,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
 
         //初始化产品协议map, 方便构建控制指令
         productKeyProtocolMap = loginCommand.getData().stream()
-                .collect(Collectors.toMap(AuthorizationData::getProduct_key, AuthorizationData::getProtocolType));
+                .collect(Collectors.toMap(AuthorizationData::getProduct_key, AuthorizationData::getProtocolType, (oldVal, newVal) -> newVal));
 
         final boolean loginSuccessful = Objects.equals(loginState, LoginState.LOGIN_SUCCESSFUL);
         if (loginSuccessful) {

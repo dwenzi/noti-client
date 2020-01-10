@@ -30,11 +30,11 @@ public class CommandUtils {
 
     static {
         REQ_CMD_MAP = Arrays.stream(NotiGeneralCommandType.values())
-                .collect(Collectors.toMap(NotiGeneralCommandType::getCode, Function.identity()));
+                .collect(Collectors.toMap(NotiGeneralCommandType::getCode, Function.identity(), (oldVal, newVal) -> newVal));
         log.info("初始化请求命令路由成功.");
 
         RESP_EVENT_MAP = Arrays.stream(NotiRespPushEvents.values())
-                .collect(Collectors.toMap(NotiRespPushEvents::getCode, Function.identity()));
+                .collect(Collectors.toMap(NotiRespPushEvents::getCode, Function.identity(), (oldVal, newVal) -> newVal));
         log.info("初始化响应命令路由成功.");
     }
 

@@ -151,11 +151,11 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
         } else {
             //普通登陆
             log.info("即将普通登陆...");
-            normalLogin(ctx, client);
+            doNormalLogin(ctx, client);
         }
     }
 
-    private void normalLogin(ChannelHandlerContext ctx, AbstractSnotiClient client) {
+    private void doNormalLogin(ChannelHandlerContext ctx, AbstractSnotiClient client) {
         LoginReqCommandBody loginCommand = client.getLoginCommand();
         String loginOrder = loginCommand.getOrder();
         ctx.writeAndFlush(loginOrder).addListener(future -> {
