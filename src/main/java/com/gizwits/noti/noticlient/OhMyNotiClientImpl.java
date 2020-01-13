@@ -390,10 +390,10 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                     p.addLast(new StringDecoder(CharsetUtil.UTF_8));
                     p.addLast(new StringEncoder(CharsetUtil.UTF_8));
 
-                    //心跳检查
+                    //心跳检查, 每隔一定的时间如果 client 和 server 没有通信消息. client 就会主动发送 ping, server 收到后会恢复 pong
                     Long heartbeatIntervalSeconds = OhMyNotiClientImpl.this.snotiConfig.getHeartbeatIntervalSeconds();
                     log.info("设置snoti客户端与服务器心跳检测间隔. [{}]s", heartbeatIntervalSeconds);
-                    p.addLast(new IdleStateHandler(heartbeatIntervalSeconds, heartbeatIntervalSeconds, 0L, TimeUnit.SECONDS));
+                    p.addLast(new IdleStateHandler(heartbeatIntervalSeconds, heartbeatIntervalSeconds, heartbeatIntervalSeconds, TimeUnit.SECONDS));
 
                     p.addLast(new SnotiChannelHandler(OhMyNotiClientImpl.this));
 
