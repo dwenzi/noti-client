@@ -12,6 +12,7 @@ import com.gizwits.noti.noticlient.enums.LoginState;
 import com.gizwits.noti.noticlient.util.CommandUtils;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
@@ -216,15 +217,15 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
         super.userEventTriggered(ctx, evt);
         if (evt instanceof IdleStateEvent) {
             IdleStateEvent event = (IdleStateEvent) evt;
-            switch (event.state()) {
-                case WRITER_IDLE:
-                    log.info("发送ping请求到服务器...");
-
-                    ctx.writeAndFlush(NotiGeneralCommandType.ping.getOrder());
-                    break;
-
-                default:
-                    break;
+            if (event.state() == IdleState.ALL_IDLE) {
+                log.info("发送ping请求到服务器...");
+                ctx.writeAndFlush(NotiGeneralCommandType.ping.getOrder()).addListener(future -> {
+                    if (future.isSuccess()) {
+                        log.info("发送 ping 请求到服务器成功.");
+                    } else {
+                        log.warn("发送 ping 请求到服务器失败.");
+                    }
+                });
             }
         }
 
