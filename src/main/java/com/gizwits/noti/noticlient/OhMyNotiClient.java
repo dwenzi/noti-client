@@ -1,6 +1,7 @@
 package com.gizwits.noti.noticlient;
 
 import com.alibaba.fastjson.JSONObject;
+import com.gizwits.noti.noticlient.bean.req.NotiCtrlDTO;
 import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import com.gizwits.noti.noticlient.bean.req.body.AuthorizationData;
 import com.gizwits.noti.noticlient.bean.resp.body.AbstractPushEventBody;
@@ -11,7 +12,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-import java.util.Map;
 
 import static com.gizwits.noti.noticlient.bean.SnotiConstants.STR_DELIVERY_ID;
 
@@ -150,70 +150,35 @@ public interface OhMyNotiClient {
     }
 
     /**
-     * V4 产品数据点协议格式，填写write_attrs
+     * 阻塞式发送控制指令
      *
+     * @param msgId      the msg id
      * @param productKey the product key
      * @param mac        the mac
      * @param did        the did
-     * @param dataPoint  the data point
+     * @param data       the raw
      * @return the boolean
      */
-    default boolean control(String productKey, String mac, String did, Map<String, Object> dataPoint) {
-        //设置msgId为空, 则会自动生成msgId
-        return this.control(StringUtils.EMPTY, productKey, mac, did, dataPoint);
+    boolean control(String msgId, String productKey, String mac, String did, Object data);
+
+    /**
+     * Batch control boolean.
+     *
+     * @param msgId    the msg id
+     * @param ctrlDTOs the ctrl dt os
+     * @return the boolean
+     */
+    boolean batchControl(String msgId, NotiCtrlDTO... ctrlDTOs);
+
+    /**
+     * Batch control boolean.
+     *
+     * @param ctrlDTOs the ctrl dt os
+     * @return the boolean
+     */
+    default boolean batchControl(NotiCtrlDTO... ctrlDTOs) {
+        return this.batchControl(StringUtils.EMPTY, ctrlDTOs);
     }
-
-    /**
-     * 阻塞式发送控制指令
-     *
-     * @param msgId      the msg id
-     * @param productKey the product key
-     * @param mac        the mac
-     * @param did        the did
-     * @param raw        the raw
-     * @return the boolean
-     */
-    boolean control(String msgId, String productKey, String mac, String did, Object raw);
-
-    /**
-     * 阻塞式发送控制指令
-     *
-     * @param msgId      the msg id
-     * @param productKey the product key
-     * @param mac        the mac
-     * @param did        the did
-     * @param dataPoint  the data point
-     * @return the boolean
-     */
-    boolean control(String msgId, String productKey, String mac, String did, Map<String, Object> dataPoint);
-
-    /**
-     * 尝试发送透传控制
-     * <p>
-     * 该方法会尝试发送控制指令,
-     * 客户端当前满足发送指令的必备条件时会快速返成功, 否则快速返回失败
-     *
-     * @param productKey the product key
-     * @param mac        the mac
-     * @param did        the did
-     * @param raw        the raw
-     * @return the boolean
-     */
-    boolean tryControl(String productKey, String mac, String did, Object raw);
-
-    /**
-     * 尝试发送数据点控制
-     * <p>
-     * 该方法会尝试发送控制指令,
-     * 客户端当前满足发送指令的必备条件时会快速返成功, 否则快速返回失败
-     *
-     * @param productKey the product key
-     * @param mac        the mac
-     * @param did        the did
-     * @param dataPoint  the data point
-     * @return the boolean
-     */
-    boolean tryControl(String productKey, String mac, String did, Map<String, Object> dataPoint);
 
     /**
      * Confirmation boolean.

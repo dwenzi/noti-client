@@ -1,6 +1,7 @@
 package com.gizwits.noti.noticlient;
 
 import com.alibaba.fastjson.JSONObject;
+import com.gizwits.noti.noticlient.bean.req.NotiCtrlDTO;
 import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import com.gizwits.noti.noticlient.bean.req.body.*;
 import com.gizwits.noti.noticlient.config.SnotiCallback;
@@ -31,14 +32,12 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import java.security.SecureRandom;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Snoti客户端实现
@@ -193,13 +192,13 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
         }
     }
 
-    private boolean control(AbstractCommandBody body, final boolean instant) {
+    private boolean control(AbstractCommandBody body) {
         if (Objects.equals(LoginState.LOGIN_SUCCESSFUL, loginState)) {
             String order = body.getOrder();
             if (log.isDebugEnabled()) {
                 log.debug("发送控制指令[{}]", order);
             }
-            return sendControlOrder(order, instant);
+            return sendControlOrder(order, false);
         } else {
             log.warn("snoti客户端未登录, 下发控制失败.");
             return false;
@@ -207,26 +206,25 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     }
 
     @Override
-    public boolean control(String msgId, String productKey, String mac, String did, Object raw) {
-        return this.control(ControlUtils.switchControl(msgId, productKey, mac, did, raw), true);
-    }
-
-    @Override
-    public boolean control(String msgId, String productKey, String mac, String did, Map<String, Object> dataPoint) {
+    public boolean control(String msgId, String productKey, String mac, String did, Object data) {
         ProtocolType protocolType = productKeyProtocolMap.getOrDefault(productKey, ProtocolType.WiFi_GPRS);
-        AbstractCommandBody body = ControlUtils.switchControl(msgId, productKey, mac, did, dataPoint, protocolType);
-        return this.control(body, false);
+        return this.control(ControlUtils.parseCtrl(msgId, protocolType, NotiCtrlDTO.of(productKey, mac, did, data)));
     }
 
     @Override
-    public boolean tryControl(String productKey, String mac, String did, Object raw) {
-        return this.control(ControlUtils.switchControl(StringUtils.EMPTY, productKey, mac, did, raw), true);
-    }
+    public boolean batchControl(String msgId, NotiCtrlDTO... ctrlDTOs) {
+        List<ProtocolType> protocolTypeDistinctList = Stream.of(ctrlDTOs)
+                .map(NotiCtrlDTO::getProductKey)
+                .map(pk -> productKeyProtocolMap.getOrDefault(pk, ProtocolType.WiFi_GPRS))
+                .distinct()
+                .collect(Collectors.toList());
 
-    @Override
-    public boolean tryControl(String productKey, String mac, String did, Map<String, Object> dataPoint) {
-        ProtocolType protocolType = productKeyProtocolMap.getOrDefault(productKey, ProtocolType.WiFi_GPRS);
-        return this.control(ControlUtils.switchControl(StringUtils.EMPTY, productKey, mac, did, dataPoint, protocolType), true);
+        if (protocolTypeDistinctList.size() != 1) {
+            //协议相同才能发起批量控制
+            throw new IllegalArgumentException("协议不一致, 控制失败. 请检查 productKey 设置的协议是否一致. ");
+        }
+
+        return this.control(ControlUtils.parseCtrl(msgId, protocolTypeDistinctList.get(0), ctrlDTOs));
     }
 
     @Override
