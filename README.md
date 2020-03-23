@@ -159,7 +159,10 @@ public class NotiClientApplicationTests {
   - [x] GPS事件
   
 ## CHANGELOG  
-1.9.0-RELEASE 发布日期: 2019-10-06  
+1.9.0-RELEASE 发布日期: 2020-02-20  
+1. 支持批量控制  
+2. 补全NotiRespPushEvents
+  
 BUG：
 1. 修复 reload 时有可能写入繁忙
 

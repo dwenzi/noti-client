@@ -109,6 +109,7 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
                 case remote_control_res:
                 case remote_control_v2_res:
                     storeMsg(jsonObject);
+                    break;
 
                 case invalid_msg:
                 default:
