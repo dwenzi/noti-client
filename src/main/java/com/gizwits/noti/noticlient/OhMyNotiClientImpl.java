@@ -65,14 +65,19 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
 
     @Override
     public void sendMsg(Object msg) {
+        if (!Objects.equals(loginState, LoginState.LOGIN_SUCCESSFUL)) {
+            log.warn("未登陆, 无法控制. [{}]", msg);
+            return;
+        }
         String strMsg;
-        if (msg instanceof AbstractCommandBody) {
+        if (msg instanceof String) {
+            strMsg = (String) msg;
+        } else if (msg instanceof AbstractCommandBody) {
             strMsg = ((AbstractCommandBody) msg).getOrder();
         } else {
             strMsg = String.valueOf(msg);
         }
-
-        sendControlOrder(strMsg, false);
+        sendControlOrder(strMsg);
     }
 
     @Override
@@ -175,19 +180,12 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
         return this;
     }
 
-    private boolean sendControlOrder(final String order, final boolean instant) {
+    private boolean sendControlOrder(final String order) {
         try {
-
-            if (instant) {
-                return controlQueue.add(order);
-
-            } else {
-                controlQueue.put(order);
-                return true;
-
-            }
+            controlQueue.put(order);
+            return true;
         } catch (Exception e) {
-            log.info("控制指令入队失败. instant[{}] controlCommand[{}] errorMsg[{}]", instant, order, e.getMessage());
+            log.info("控制指令入队失败. controlCommand[{}] errorMsg[{}]", order, e.getMessage());
             return false;
         }
     }
@@ -198,7 +196,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
             if (log.isDebugEnabled()) {
                 log.debug("发送控制指令[{}]", order);
             }
-            return sendControlOrder(order, false);
+            return sendControlOrder(order);
         } else {
             log.warn("snoti客户端未登录, 下发控制失败.");
             return false;
@@ -276,7 +274,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
             String order = subscribeReqCommandBody.getOrder();
             log.info("当前客户端为登录成功, 开始调用动态登录. order[{}]", order);
 
-            sendControlOrder(order, false);
+            sendControlOrder(order);
         }
 
         return this;
@@ -306,7 +304,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
         unsubscribeReqCommandBody.setData(Collections.singletonList(authorizationData));
         String unsubscribeReqCommandBodyOrder = unsubscribeReqCommandBody.getOrder();
         log.info("发送取消订阅请求. {}", unsubscribeReqCommandBodyOrder);
-        sendControlOrder(unsubscribeReqCommandBodyOrder, false);
+        sendControlOrder(unsubscribeReqCommandBodyOrder);
 
         productKeyProtocolMap.remove(productKey);
 
@@ -331,9 +329,20 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     public synchronized void setLoginState(LoginState loginState) {
         if (Objects.equals(loginState, LoginState.NOT_LOGGED)) {
             //初始化需要清空ack队列, 避免ack错误MQ会被断开
-            log.warn("snoti客户端登录状态重置为未登录, 即将清空无效的ack消息.");
+            log.warn("snoti客户端登录状态重置为未登录, 即将清空无效的ack和登陆/订阅消息.");
             this.ackReplyQueue.clear();
             log.info("清空ack队列成功.");
+
+            this.controlQueue.removeIf(msg -> {
+                JSONObject json = JSONObject.parseObject(msg);
+                String cmd = json.getString("cmd");
+                boolean clean = StringUtils.equals(cmd, "subscribe_req") || StringUtils.equals(cmd, "login_req");
+                if (clean) {
+                    log.info("清理登陆/订阅请求. {}", msg);
+                }
+                return clean;
+            });
+            log.info("清空登陆/订阅成功.");
         }
 
         this.loginState = loginState;

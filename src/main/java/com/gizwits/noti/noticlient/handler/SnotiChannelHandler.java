@@ -20,7 +20,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collections;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * The type Client handler.
@@ -82,11 +81,10 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
                         boolean smartLogin = BooleanUtils.isTrue(client.getSnotiConfig().getSmartLogin());
                         if (smartLogin) {
                             log.info("使用智能登陆, 开始准备订阅指令");
-                            CompletableFuture.runAsync(() ->
-                                    client.getLoginCommand().getData().stream()
-                                            .map(it -> new SubscribeReqCommandBody().setData(Collections.singletonList(it)))
-                                            .map(AbstractCommandBody::getOrder)
-                                            .forEach(client::sendMsg));
+                            client.getLoginCommand().getData().stream()
+                                    .map(it -> new SubscribeReqCommandBody().setData(Collections.singletonList(it)))
+                                    .map(AbstractCommandBody::getOrder)
+                                    .forEach(client::sendMsg);
                         }
 
                     } else {
