@@ -157,11 +157,13 @@ public class NotiClientApplicationTests {
   - [x] 中控添加子设备
   - [x] 中控删除子设备
   - [x] GPS事件
+  - [x] LBS事件
   
 ## CHANGELOG  
 1.9.0-RELEASE 发布日期: 2020-02-20  
 1. 支持批量控制  
 2. 补全NotiRespPushEvents
+3. LBS事件支持  
   
 BUG：
 1. 修复 reload 时有可能写入繁忙
