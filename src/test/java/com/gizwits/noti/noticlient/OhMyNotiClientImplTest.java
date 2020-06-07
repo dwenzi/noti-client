@@ -43,7 +43,7 @@ public class OhMyNotiClientImplTest {
                 .setProduct_key(productKey);
 
         //初始化客户端
-        OhMyNotiClient client = new OhMyNotiClientImpl()
+        OhMyNotiClient client = new OhMyNotiClientImpl(executor)
                 //设置snoti回调, 默认回调见SnotiCallback#identity
                 .setCallback(SnotiCallback.identity())
                 //加载登陆信息

@@ -33,9 +33,7 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import java.security.SecureRandom;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -59,8 +57,15 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     private Map<String, ProtocolType> productKeyProtocolMap;
     private static final long DEFAULT_POLL_TIMEOUT_MS = 2;
 
-    public OhMyNotiClientImpl() {
+    private final Executor executor;
+
+    public OhMyNotiClientImpl(Executor executor) {
         super();
+        this.executor = executor;
+    }
+
+    public OhMyNotiClientImpl() {
+        this(Executors.newSingleThreadExecutor());
     }
 
     @Override
@@ -84,7 +89,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     public synchronized void switchPushMessage() {
         log.info("推送开关打开...");
 
-        bootstrap.config().group().execute(() -> {
+        executor.execute(() -> {
             while (true) {
 
                 if (!Objects.equals(loginState, LoginState.LOGIN_SUCCESSFUL)) {
@@ -289,7 +294,6 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
      * 取消订阅
      *
      * @param authorizationData the authorization data
-     * @return
      */
     @Override
     public OhMyNotiClient unsubscribe(AuthorizationData authorizationData) {
