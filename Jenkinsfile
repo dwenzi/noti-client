@@ -13,7 +13,7 @@ pipeline {
         branch 'develop'
       }
       steps {
-        sh 'mvn -Dmaven.test.skip=true deploy'
+        sh 'mvn deploy'
       }
     }
     stage('deploy release') {
@@ -21,7 +21,7 @@ pipeline {
         branch 'master'
       }
       steps {
-        sh 'mvn -Dmaven.test.skip=true deploy -P release'
+        sh 'mvn deploy -P release'
       }
     }
   }
