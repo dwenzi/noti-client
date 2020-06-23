@@ -1,7 +1,9 @@
-package com.gizwits.noti.noticlient;
+package com.gizwits.noti;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.gizwits.noti.noticlient.OhMyNotiClient;
+import com.gizwits.noti.noticlient.OhMyNotiClientImpl;
 import com.gizwits.noti.noticlient.bean.req.NotiReqPushEvents;
 import com.gizwits.noti.noticlient.bean.req.body.AuthorizationData;
 import com.gizwits.noti.noticlient.config.SnotiCallback;
@@ -16,11 +18,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 快速上手
+ *
  * @author Jcxcc
  * @since 1.0
  */
 @Slf4j
-public class OhMyNotiClientImplTest {
+public class OhMyNotiClientQuickStart {
 
     public static void main(String[] args) throws InterruptedException {
         String
@@ -43,7 +47,7 @@ public class OhMyNotiClientImplTest {
                 .setProduct_key(productKey);
 
         //初始化客户端
-        OhMyNotiClient client = new OhMyNotiClientImpl(executor)
+        OhMyNotiClient client = new OhMyNotiClientImpl()
                 //设置snoti回调, 默认回调见SnotiCallback#identity
                 .setCallback(SnotiCallback.identity())
                 //加载登陆信息

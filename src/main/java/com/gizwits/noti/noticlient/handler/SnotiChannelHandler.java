@@ -16,6 +16,7 @@ import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collections;
@@ -126,7 +127,7 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
             }
 
         } else {
-            log.error("存储消息失败. 消息{}", jsonObject.toJSONString());
+            log.warn("存储消息失败. 消息{}", jsonObject.toJSONString());
         }
     }
 
@@ -156,7 +157,7 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
     }
 
     private void doNormalLogin(ChannelHandlerContext ctx, AbstractSnotiClient client) {
-        LoginReqCommandBody loginCommand = client.getLoginCommand();
+        LoginReqCommandBody loginCommand = ObjectUtils.defaultIfNull(client.getLoginCommand(), new LoginReqCommandBody());
         String loginOrder = loginCommand.getOrder();
         ctx.writeAndFlush(loginOrder).addListener(future -> {
             if (future.isSuccess()) {
@@ -170,10 +171,9 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
     }
 
     private void doSmartLogin(ChannelHandlerContext ctx, AbstractSnotiClient client) {
-        LoginReqCommandBody loginCommand = client.getLoginCommand();
         //首先发送空的登陆信息，然后接收到登陆成功回调后再发起订阅
         LoginReqCommandBody emptyCommandBody = new LoginReqCommandBody();
-        emptyCommandBody.setPrefetchCount(loginCommand.getPrefetchCount());
+        emptyCommandBody.setPrefetchCount(emptyCommandBody.getPrefetchCount());
         String order = emptyCommandBody.getOrder();
         ctx.writeAndFlush(order).addListener(future -> {
             if (!future.isSuccess()) {

@@ -116,7 +116,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                             });
                         }
                     } catch (InterruptedException e) {
-                        log.error("回复ack消息失败. " + e.getMessage());
+                        log.warn("回复ack消息失败. " + e.getMessage());
                         e.printStackTrace();
                     }
 
@@ -137,7 +137,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                                 });
                             }
                         } catch (Exception e) {
-                            log.error("下发控制指令失败. " + e.getMessage());
+                            log.warn("下发控制指令失败. " + e.getMessage());
                             e.printStackTrace();
                         }
                     }
@@ -203,7 +203,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
             }
             return sendControlOrder(order);
         } else {
-            log.warn("snoti客户端未登录, 下发控制失败.");
+            log.warn("snoti客户端未登录, 控制指令将在登陆成功后下发.");
             return false;
         }
     }
@@ -269,7 +269,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
 
         //初始化产品协议map, 方便构建控制指令
         productKeyProtocolMap = loginCommand.getData().stream()
-                .collect(Collectors.toMap(AuthorizationData::getProduct_key, AuthorizationData::getProtocolType, (oldVal, newVal) -> newVal));
+                .collect(Collectors.toMap(AuthorizationData::getProductKey, AuthorizationData::getProtocolType, (oldVal, newVal) -> newVal));
 
         final boolean loginSuccessful = Objects.equals(loginState, LoginState.LOGIN_SUCCESSFUL);
         if (loginSuccessful) {
@@ -297,7 +297,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
      */
     @Override
     public OhMyNotiClient unsubscribe(AuthorizationData authorizationData) {
-        String productKey = authorizationData.getProduct_key();
+        String productKey = authorizationData.getProductKey();
         boolean pkIsInvalid = !productKeyProtocolMap.containsKey(productKey);
         if (pkIsInvalid) {
             log.warn("productKey 无效, 不需要执行取消订阅. productKey[{}]", productKey);
@@ -431,7 +431,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                     .handler(handler);
             this.doConnect();
         } catch (Exception e) {
-            log.error("snoti客户端启动错误!!!");
+            log.warn("snoti客户端启动错误!!!");
 
             throw new RuntimeException(e);
         }
@@ -465,7 +465,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
         if (Objects.equals(LoginState.LOGGING, loginState)) {
             log.info("snoti登录中...");
         } else if (Objects.equals(LoginState.LOGIN_FAILED, loginState)) {
-            log.error("snoti登录信息出错, 请使用reload方法重新加载登录信息...");
+            log.warn("snoti登录信息出错, 请使用reload方法重新加载登录信息...");
         } else if (this.channel == null || !this.channel.isActive()) {
             ChannelFuture future = this.bootstrap.connect(this.snotiConfig.getHost(), this.snotiConfig.getPort());
             future.addListener((ChannelFutureListener) futureListener -> {

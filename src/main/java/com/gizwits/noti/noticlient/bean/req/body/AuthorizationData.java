@@ -22,6 +22,13 @@ import java.util.stream.Collectors;
 @Accessors(chain = true)
 public final class AuthorizationData {
 
+
+    public AuthorizationData() {
+        this.events = new ArrayList<>();
+        this.protocolType = ProtocolType.V2;
+    }
+
+
     /**
      * 协议类型
      * <p>
@@ -29,15 +36,43 @@ public final class AuthorizationData {
      * 用于控制设备时候的自动构造控制指令
      */
     private ProtocolType protocolType;
-    private String product_key;
-    private String auth_id;
-    private String auth_secret;
+    private String productKey;
+    private String authId;
+    private String authSecret;
     private String subkey;
     private List<String> events;
 
-    public AuthorizationData() {
-        this.events = new ArrayList<>();
-        this.protocolType = ProtocolType.WiFi_GPRS;
+    /**
+     * @param productKey
+     * @return
+     * @see #setProductKey(String)
+     */
+    @Deprecated
+    public AuthorizationData setProduct_key(String productKey) {
+        this.productKey = productKey;
+        return this;
+    }
+
+    /**
+     * @param authId
+     * @return
+     * @see #setAuthId(String)
+     */
+    @Deprecated
+    public AuthorizationData setAuth_id(String authId) {
+        this.authId = authId;
+        return this;
+    }
+
+    /**
+     * @param authSecret
+     * @return
+     * @see #setAuthSecret(String)
+     */
+    @Deprecated
+    public AuthorizationData setAuth_secret(String authSecret) {
+        this.authSecret = authSecret;
+        return this;
     }
 
     /**
@@ -52,7 +87,6 @@ public final class AuthorizationData {
                 .forEach(events::add);
 
         setEvents(getEvents().stream().distinct().collect(Collectors.toList()));
-
         return this;
     }
 }

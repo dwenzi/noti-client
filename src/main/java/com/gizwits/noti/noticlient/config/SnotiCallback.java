@@ -41,7 +41,7 @@ public interface SnotiCallback {
      * @param errorMessage the error message
      */
     default void loginFailed(String errorMessage) {
-        log.error("snoti登录失败[{}]...", errorMessage);
+        log.warn("snoti登录失败[{}]...", errorMessage);
     }
 
 
