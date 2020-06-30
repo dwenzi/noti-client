@@ -1,5 +1,6 @@
 package com.gizwits.noti.noticlient.bean.req.body;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import com.gizwits.noti.noticlient.bean.req.NotiReqPushEvents;
 import com.gizwits.noti.noticlient.enums.ProtocolType;
 import lombok.AllArgsConstructor;
@@ -36,8 +37,11 @@ public final class AuthorizationData {
      * 用于控制设备时候的自动构造控制指令
      */
     private ProtocolType protocolType;
+    @JSONField(name = "product_key")
     private String productKey;
+    @JSONField(name = "auth_id")
     private String authId;
+    @JSONField(name = "auth_secret")
     private String authSecret;
     private String subkey;
     private List<String> events;
