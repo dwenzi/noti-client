@@ -101,17 +101,20 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                 if (channel.isWritable()) {
 
                     try {
-                        String ackMessage = this.ackReplyQueue.poll(DEFAULT_POLL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-                        if (Objects.nonNull(ackMessage)) {
-                            channel.writeAndFlush(ackMessage).addListener(future -> {
+                        String deliveryId = this.ackReplyQueue.poll(DEFAULT_POLL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+                        if (Objects.nonNull(deliveryId)) {
+                            String eventAckMessage = CommandUtils.getEventAckMessage(deliveryId);
+                            channel.writeAndFlush(eventAckMessage).addListener(future -> {
                                 if (!future.isSuccess()) {
-                                    log.warn("回复ack失败, 即将返回ack回复队列重试. [{}]", ackMessage);
-                                    ackReplyQueue.put(ackMessage);
-                                    log.info("重新放入ack回复队列成功. [{}]", ackMessage);
-                                } else {
-                                    if (log.isDebugEnabled()) {
-                                        log.debug("回复ack成功. [{}]", ackMessage);
+                                    if (Objects.equals(loginState, LoginState.LOGIN_SUCCESSFUL)) {
+                                        log.warn("回复ack失败, 即将返回ack回复队列重试. deliveryId[{}]", deliveryId);
+                                        confirm(deliveryId);
+                                        log.info("重新放入ack回复队列成功. deliveryId[{}]", deliveryId);
+                                    } else {
+                                        log.info("当前状态为未登录, 不重试ack. deliveryId[{}]", deliveryId);
                                     }
+                                } else {
+                                    log.debug("回复ack成功. deliveryId[{}]", deliveryId);
                                 }
                             });
                         }
@@ -130,9 +133,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                                         controlQueue.put(controlOrder);
                                         log.info("重新放入控制队列成功. [{}]", controlOrder);
                                     } else {
-                                        if (log.isDebugEnabled()) {
-                                            log.debug("下发控制指令成功. [{}]", controlOrder);
-                                        }
+                                        log.debug("下发控制指令成功. [{}]", controlOrder);
                                     }
                                 });
                             }
@@ -232,12 +233,11 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
 
     @Override
     public boolean confirm(String deliveryId) {
-        String eventAckMessage = CommandUtils.getEventAckMessage(deliveryId);
         try {
-            ackReplyQueue.put(eventAckMessage);
+            ackReplyQueue.put(deliveryId);
             return true;
         } catch (Exception e) {
-            log.warn("ack message入队失败. ack message[{}] {}", eventAckMessage, e.getMessage());
+            log.warn("ack message入队失败. deliverId[{}] {}", deliveryId, e.getMessage());
             e.printStackTrace();
             return false;
         }
