@@ -213,7 +213,7 @@ public interface OhMyNotiClient {
         return false;
     }
 
-    default OhMyNotiClient setCredentials(Credential credential) {
+    default OhMyNotiClient addCredential(Credential credential) {
         List<Credential> credentials = Stream.concat(getCredentials().stream(), Stream.of(credential))
                 .distinct().collect(Collectors.toList());
         return setCredentials(credentials);

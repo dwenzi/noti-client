@@ -46,7 +46,7 @@ public class OhMyNotiClientQuickStart {
                 //设置snoti回调, 默认回调见SnotiCallback#identity
                 .setCallback(SnotiCallback.identity())
                 //加载登陆信息
-                .setCredentials(credential)
+                .addCredential(credential)
                 //snoti配置, 初始化配置见SnotiConfig
                 .setSnotiConfig(new SnotiConfig());
 
@@ -82,7 +82,7 @@ public class OhMyNotiClientQuickStart {
 
         //重新加载登陆信息
         TimeUnit.SECONDS.sleep(30);
-        client.setCredentials(credential);
+        client.addCredential(credential);
         //重新加载登陆信息end
 
         //结束
