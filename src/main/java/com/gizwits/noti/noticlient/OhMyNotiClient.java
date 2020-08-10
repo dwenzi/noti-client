@@ -81,6 +81,8 @@ public interface OhMyNotiClient {
      */
     void switchPushMessage();
 
+    void disconnected();
+
     /**
      * 设置snoti配置信息
      *

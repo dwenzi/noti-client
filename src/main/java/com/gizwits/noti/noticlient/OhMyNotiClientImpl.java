@@ -165,6 +165,14 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     }
 
     @Override
+    public void disconnected() {
+        WORK.set(false);
+        this.callback.disconnected();
+        log.info("连接已断开.");
+        this.credentials.forEach(it -> it.setLoginState(LoginState.NOT_LOGGED));
+    }
+
+    @Override
     public JSONObject receiveMessage() {
         try {
             JSONObject json = receiveQueue.take();
@@ -204,7 +212,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     }
 
     private boolean control(AbstractCommandBody body) {
-        if (!WORK.get()) {
+        if (WORK.get()) {
             String order = body.getOrder();
             if (log.isDebugEnabled()) {
                 log.debug("发送控制指令[{}]", order);

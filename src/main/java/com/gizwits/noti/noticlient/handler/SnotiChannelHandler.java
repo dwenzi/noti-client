@@ -7,7 +7,6 @@ import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import com.gizwits.noti.noticlient.bean.req.body.AbstractCommandBody;
 import com.gizwits.noti.noticlient.bean.req.body.LoginReqCommandBody;
 import com.gizwits.noti.noticlient.bean.req.body.SubscribeReqCommandBody;
-import com.gizwits.noti.noticlient.enums.LoginState;
 import com.gizwits.noti.noticlient.util.CommandUtils;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -17,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * The type Client handler.
@@ -134,9 +132,6 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
         log.debug("连接激活即将发起登陆信息...");
-
-        //智能登陆
-        log.info("即将智能登陆...");
         doSmartLogin(ctx);
     }
 
@@ -167,9 +162,7 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
         super.channelInactive(ctx);
 
         log.debug("触发连接断开回调...");
-        this.client.getCallback().disconnected();
-
-        this.client.setCredentials(this.client.getCredentials().stream().peek(it -> it.setLoginState(LoginState.NOT_LOGGED)).collect(Collectors.toList()));
+        this.client.disconnected();
 
         this.client.doConnect();
     }
