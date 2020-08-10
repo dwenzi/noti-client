@@ -264,17 +264,19 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
             Preconditions.checkArgument(_credentials != null && _credentials.size() > 0,
                     "credentials can not be empty.");
 
-            for (Credential credential : _credentials) {
-                if (!this.credentials.contains(credential)) {
-                    //新增订阅
-                    sendMsg(new SubscribeReqCommandBody(credential).getOrder());
+            if (WORK.get()) {
+                for (Credential credential : _credentials) {
+                    if (!this.credentials.contains(credential)) {
+                        //新增订阅
+                        sendMsg(new SubscribeReqCommandBody(credential).getOrder());
+                    }
                 }
-            }
 
-            //旧对新的差集, 取消订阅
-            this.credentials.stream()
-                    .filter(c -> !_credentials.contains(c))
-                    .forEach(c -> sendMsg(new UnsubscribeReqCommandBody(c).getOrder()));
+                //旧对新的差集, 取消订阅
+                this.credentials.stream()
+                        .filter(c -> !_credentials.contains(c))
+                        .forEach(c -> sendMsg(new UnsubscribeReqCommandBody(c).getOrder()));
+            }
 
             this.credentials = _credentials;
 
