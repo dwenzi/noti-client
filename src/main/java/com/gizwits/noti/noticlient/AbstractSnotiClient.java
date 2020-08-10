@@ -1,6 +1,6 @@
 package com.gizwits.noti.noticlient;
 
-import com.gizwits.noti.noticlient.bean.req.body.LoginReqCommandBody;
+import com.gizwits.noti.noticlient.bean.Credential;
 import com.gizwits.noti.noticlient.config.SnotiCallback;
 import com.gizwits.noti.noticlient.config.SnotiConfig;
 import io.netty.bootstrap.Bootstrap;
@@ -16,6 +16,9 @@ import io.netty.util.internal.SystemPropertyUtil;
 import lombok.Getter;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Snoti客户端
  *
@@ -28,31 +31,26 @@ public abstract class AbstractSnotiClient {
      * The Callback.
      */
     protected SnotiCallback callback;
+
     /**
      * The Snoti config.
      */
     @Getter
     protected SnotiConfig snotiConfig;
+
     /**
-     * The Login command.
+     * The credentials
      */
     @Getter
-    protected LoginReqCommandBody loginCommand;
-
+    protected List<Credential> credentials;
 
     /**
      * Instantiates a new Abstract snoti client.
      */
     public AbstractSnotiClient() {
         this.snotiConfig = new SnotiConfig();
+        this.credentials = new ArrayList<>();
     }
-
-    /**
-     * Send msg.
-     *
-     * @param msg the msg
-     */
-    public abstract void sendMsg(Object msg);
 
     /**
      * 是否可以使用epoll

@@ -60,7 +60,8 @@ public class NotiClientControlTest extends NotiClientTest {
         client = new OhMyNotiClientImpl()
                 .setCallback(callback)
                 .setSnotiConfig(getSnotiConfig())
-                .addLoginAuthorizes(getAuthorizationData());
+                .setCredentials(getCredentials());
+
         client.doStart();
         log.info("Client start");
     }

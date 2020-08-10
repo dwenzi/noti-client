@@ -1,12 +1,8 @@
 package com.gizwits.noti.noticlient.config;
 
-import com.gizwits.noti.noticlient.bean.req.body.AuthorizationData;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * snoti 回调
@@ -50,15 +46,6 @@ public interface SnotiCallback {
      */
     default void disconnected() {
         log.warn("snoti客户端连接断开, 即将尝试重连...");
-    }
-
-    /**
-     * Reload.
-     *
-     * @param authorizationData the login authorize infos
-     */
-    default void reload(AuthorizationData... authorizationData) {
-        log.info("snoti重载登录信息[{}]...", Stream.of(authorizationData).map(AuthorizationData::toString).collect(Collectors.joining(",")));
     }
 
     /**

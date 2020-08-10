@@ -54,6 +54,7 @@
         <junit.version>4.12</junit.version>
         <netty.version>4.1.34.Final</netty.version>
         <ch.qos.logback.version>1.2.3</ch.qos.logback.version>
+        <guava.version>25.1-jre</guava.version>
         <lombok.version>1.16.22</lombok.version>
         <java.version>1.8</java.version>
     </properties>
@@ -103,6 +104,12 @@
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
             <version>${fastjson.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
         </dependency>
     </dependencies>
 

@@ -1,15 +1,14 @@
 package com.gizwits.noti.noticlient;
 
+import com.gizwits.noti.noticlient.bean.Credential;
 import com.gizwits.noti.noticlient.bean.req.NotiReqPushEvents;
-import com.gizwits.noti.noticlient.bean.req.body.AuthorizationData;
 import com.gizwits.noti.noticlient.config.SnotiConfig;
 import lombok.Data;
 import lombok.Getter;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Objects;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * @author Jcxcc
@@ -47,15 +46,15 @@ public abstract class NotiClientTest {
                 .setPort(getProperties().getNotiServerPort());
     }
 
-    protected AuthorizationData getAuthorizationData() {
-        return new AuthorizationData()
-                .setSubkey(getProperties().getSubkey())
-                .setAuthId(getProperties().getAuthId())
-                .setAuthSecret(getProperties().getAuthSecret())
-                .setProductKey(getProperties().getProductKey())
+    protected List<Credential> getCredentials() {
+        return Collections.singletonList(Credential.builder()
+                .subkey(getProperties().getSubkey())
+                .authId(getProperties().getAuthId())
+                .authSecret(getProperties().getAuthSecret())
+                .productKey(getProperties().getProductKey())
                 //此处订阅所有推送事件, 可按需修改
-                //.addEvents(NotiReqPushEvents.ONLINE, NotiReqPushEvents.OFFLINE, NotiReqPushEvents.KV);
-                .addEvents(NotiReqPushEvents.values());
+                .events(Arrays.asList(NotiReqPushEvents.values()))
+                .build());
     }
 
     @Data

@@ -1,17 +1,18 @@
 package com.gizwits.noti.noticlient;
 
 import com.alibaba.fastjson.JSONObject;
+import com.gizwits.noti.noticlient.bean.Credential;
 import com.gizwits.noti.noticlient.bean.req.NotiCtrlDTO;
 import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
-import com.gizwits.noti.noticlient.bean.req.body.AuthorizationData;
 import com.gizwits.noti.noticlient.bean.resp.body.AbstractPushEventBody;
 import com.gizwits.noti.noticlient.config.SnotiCallback;
 import com.gizwits.noti.noticlient.config.SnotiConfig;
-import com.gizwits.noti.noticlient.enums.LoginState;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.gizwits.noti.noticlient.bean.SnotiConstants.STR_DELIVERY_ID;
 
@@ -24,11 +25,11 @@ import static com.gizwits.noti.noticlient.bean.SnotiConstants.STR_DELIVERY_ID;
 public interface OhMyNotiClient {
 
     /**
-     * Sets login state.
+     * markLoginState
      *
-     * @param loginState the login state
+     * @param json
      */
-    void setLoginState(LoginState loginState);
+    void markLoginState(JSONObject json);
 
     /**
      * Store information.
@@ -39,52 +40,24 @@ public interface OhMyNotiClient {
     boolean storeInformation(JSONObject jsonMessage);
 
     /**
-     * 添加登录信息
+     * get credentials
      *
-     * @param authorizes the authorizes
-     * @return the oh my noti client
+     * @return credentials
      */
-    OhMyNotiClient addLoginAuthorizes(AuthorizationData... authorizes);
+    List<Credential> getCredentials();
 
     /**
-     * Subscribe oh my noti client.
+     * set credentials
      *
-     * @param authorizes the authorizes
-     * @return the oh my noti client
+     * @param credentials credentials
+     * @return
      */
-    OhMyNotiClient subscribe(AuthorizationData... authorizes);
-
-    /**
-     * Unsubscribe oh my noti client.
-     *
-     * @param authorizationData the authorization data
-     * @return the oh my noti client
-     */
-    default OhMyNotiClient unsubscribe(AuthorizationData... authorizationData) {
-        Arrays.asList(authorizationData).forEach(this::unsubscribe);
-        return this;
-    }
-
-    /**
-     * Unsubscribe oh my noti client.
-     *
-     * @param authorizationData the authorization data
-     * @return the oh my noti client
-     */
-    OhMyNotiClient unsubscribe(AuthorizationData authorizationData);
+    OhMyNotiClient setCredentials(List<Credential> credentials);
 
     /**
      * 建立连接
      */
     void doConnect();
-
-    /**
-     * 重新加载登录信息
-     *
-     * @param authorizes the authorizes
-     * @return the oh my noti client
-     */
-    OhMyNotiClient reload(AuthorizationData... authorizes);
 
     /**
      * 开始工作
@@ -95,6 +68,13 @@ public interface OhMyNotiClient {
      * 停止工作
      */
     void doStop();
+
+    /**
+     * send msg
+     *
+     * @param msg
+     */
+    void sendMsg(Object msg);
 
     /**
      * 打开推送消息开关
@@ -229,5 +209,11 @@ public interface OhMyNotiClient {
         }
 
         return false;
+    }
+
+    default OhMyNotiClient setCredentials(Credential credential) {
+        List<Credential> credentials = Stream.concat(getCredentials().stream(), Stream.of(credential))
+                .distinct().collect(Collectors.toList());
+        return setCredentials(credentials);
     }
 }

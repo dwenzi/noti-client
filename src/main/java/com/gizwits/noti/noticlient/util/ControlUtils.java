@@ -6,8 +6,10 @@ import com.gizwits.noti.noticlient.bean.req.NotiCtrlDTO;
 import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import com.gizwits.noti.noticlient.bean.req.NotiReqControlType;
 import com.gizwits.noti.noticlient.bean.req.SourceCategory;
-import com.gizwits.noti.noticlient.bean.req.body.*;
-import com.gizwits.noti.noticlient.bean.resp.body.ControlV2CallbackEventBody;
+import com.gizwits.noti.noticlient.bean.req.body.AbstractCommandBody;
+import com.gizwits.noti.noticlient.bean.req.body.ControlReqCommandBody;
+import com.gizwits.noti.noticlient.bean.req.body.ControlV2ReqCommandBody;
+import com.gizwits.noti.noticlient.bean.req.body.InternalControlReqCommandBody;
 import com.gizwits.noti.noticlient.enums.ProtocolType;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -18,6 +20,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * The type Control utils.
@@ -221,12 +225,6 @@ public class ControlUtils {
                     return v2Body;
                 })
                 .collect(Collectors.toList());
-    }
-
-    private static void checkArgument(boolean expression, String errorMsg) {
-        if (!expression) {
-            throw new IllegalArgumentException(errorMsg);
-        }
     }
 
     /**

@@ -4,11 +4,9 @@ package com.gizwits.noti;
 import com.alibaba.fastjson.JSONObject;
 import com.gizwits.noti.noticlient.OhMyNotiClient;
 import com.gizwits.noti.noticlient.OhMyNotiClientImpl;
-import com.gizwits.noti.noticlient.bean.req.NotiReqPushEvents;
-import com.gizwits.noti.noticlient.bean.req.body.AuthorizationData;
+import com.gizwits.noti.noticlient.bean.Credential;
 import com.gizwits.noti.noticlient.config.SnotiCallback;
 import com.gizwits.noti.noticlient.config.SnotiConfig;
-import com.gizwits.noti.noticlient.enums.ProtocolType;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
@@ -36,22 +34,19 @@ public class OhMyNotiClientQuickStart {
                 productKey = "product_key";
 
         //登陆信息
-        AuthorizationData authorizationData = new AuthorizationData()
-                //默认为 Wi-Fi_GPRS, 可选 NB_IoT, LORA. 此配置让client自动根据协议类型发送对应的请求体
-                .setProtocolType(ProtocolType.WiFi_GPRS)
-                .setAuth_id(authId)
-                .setAuth_secret(authSecret)
-                .setSubkey(subKey)
-                //订阅事件, 建议按照需求订阅
-                .addEvents(NotiReqPushEvents.values())
-                .setProduct_key(productKey);
+        Credential credential = Credential.builder()
+                .subkey(subKey)
+                .authId(authId)
+                .authSecret(authSecret)
+                .productKey(productKey)
+                .build();
 
         //初始化客户端
         OhMyNotiClient client = new OhMyNotiClientImpl()
                 //设置snoti回调, 默认回调见SnotiCallback#identity
                 .setCallback(SnotiCallback.identity())
                 //加载登陆信息
-                .addLoginAuthorizes(authorizationData)
+                .setCredentials(credential)
                 //snoti配置, 初始化配置见SnotiConfig
                 .setSnotiConfig(new SnotiConfig());
 
@@ -87,7 +82,7 @@ public class OhMyNotiClientQuickStart {
 
         //重新加载登陆信息
         TimeUnit.SECONDS.sleep(30);
-        client.reload(authorizationData);
+        client.setCredentials(credential);
         //重新加载登陆信息end
 
         //结束

@@ -1,9 +1,13 @@
 package com.gizwits.noti.noticlient;
 
 import com.alibaba.fastjson.JSONObject;
+import com.gizwits.noti.noticlient.bean.Credential;
 import com.gizwits.noti.noticlient.bean.req.NotiCtrlDTO;
 import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
-import com.gizwits.noti.noticlient.bean.req.body.*;
+import com.gizwits.noti.noticlient.bean.req.body.AbstractCommandBody;
+import com.gizwits.noti.noticlient.bean.req.body.SubscribeReqCommandBody;
+import com.gizwits.noti.noticlient.bean.req.body.UnsubscribeReqCommandBody;
+import com.gizwits.noti.noticlient.bean.resp.body.SubscribeCallbackEventBody;
 import com.gizwits.noti.noticlient.config.SnotiCallback;
 import com.gizwits.noti.noticlient.config.SnotiConfig;
 import com.gizwits.noti.noticlient.config.SnotiTrustManager;
@@ -15,6 +19,7 @@ import com.gizwits.noti.noticlient.handler.SnotiMetricsHandler;
 import com.gizwits.noti.noticlient.util.CommandUtils;
 import com.gizwits.noti.noticlient.util.ControlUtils;
 import com.gizwits.noti.noticlient.util.UniqueArrayBlockingQueue;
+import com.google.common.base.Preconditions;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
@@ -32,10 +37,12 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Snoti客户端实现
@@ -52,10 +59,10 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
 
     private Channel channel;
     private Bootstrap bootstrap;
-    private volatile LoginState loginState = LoginState.NOT_LOGGED;
 
-    private Map<String, ProtocolType> productKeyProtocolMap;
     private static final long DEFAULT_POLL_TIMEOUT_MS = 2;
+    private static final AtomicBoolean WORK = new AtomicBoolean(false);
+    private static final ReentrantReadWriteLock CREDENTIAL_LOCK = new ReentrantReadWriteLock();
 
     private final Executor executor;
 
@@ -70,7 +77,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
 
     @Override
     public void sendMsg(Object msg) {
-        if (!Objects.equals(loginState, LoginState.LOGIN_SUCCESSFUL)) {
+        if (!WORK.get()) {
             log.warn("未登陆, 无法控制. [{}]", msg);
             return;
         }
@@ -89,12 +96,12 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     public synchronized void switchPushMessage() {
         log.info("推送开关打开...");
 
+        WORK.set(true);
         executor.execute(() -> {
             while (true) {
-
-                if (!Objects.equals(loginState, LoginState.LOGIN_SUCCESSFUL)) {
+                if (!WORK.get()) {
                     //连接断开时登录状态初始化, 回复线程退出
-                    log.warn("非登录成功状态, 退出回复线程. 当前客户端状态[{}]", loginState);
+                    log.warn("非工作状态, 退出回复线程.");
                     break;
                 }
 
@@ -106,7 +113,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                             String eventAckMessage = CommandUtils.getEventAckMessage(deliveryId);
                             channel.writeAndFlush(eventAckMessage).addListener(future -> {
                                 if (!future.isSuccess()) {
-                                    if (Objects.equals(loginState, LoginState.LOGIN_SUCCESSFUL)) {
+                                    if (!WORK.get()) {
                                         log.warn("回复ack失败, 即将返回ack回复队列重试. deliveryId[{}]", deliveryId);
                                         confirm(deliveryId);
                                         log.info("重新放入ack回复队列成功. deliveryId[{}]", deliveryId);
@@ -197,38 +204,26 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     }
 
     private boolean control(AbstractCommandBody body) {
-        if (Objects.equals(LoginState.LOGIN_SUCCESSFUL, loginState)) {
+        if (!WORK.get()) {
             String order = body.getOrder();
             if (log.isDebugEnabled()) {
                 log.debug("发送控制指令[{}]", order);
             }
             return sendControlOrder(order);
         } else {
-            log.warn("snoti客户端未登录, 控制指令将在登陆成功后下发.");
+            log.warn("snoti客户端未工作, 控制指令将在切换到工作状态后下发.");
             return false;
         }
     }
 
     @Override
     public boolean control(String msgId, String productKey, String mac, String did, Object data) {
-        ProtocolType protocolType = productKeyProtocolMap.getOrDefault(productKey, ProtocolType.WiFi_GPRS);
-        return this.control(ControlUtils.parseCtrl(msgId, protocolType, NotiCtrlDTO.of(productKey, mac, did, data)));
+        return this.control(ControlUtils.parseCtrl(msgId, ProtocolType.V2, NotiCtrlDTO.of(productKey, mac, did, data)));
     }
 
     @Override
     public boolean batchControl(String msgId, NotiCtrlDTO... ctrlDTOs) {
-        List<ProtocolType> protocolTypeDistinctList = Stream.of(ctrlDTOs)
-                .map(NotiCtrlDTO::getProductKey)
-                .map(pk -> productKeyProtocolMap.getOrDefault(pk, ProtocolType.WiFi_GPRS))
-                .distinct()
-                .collect(Collectors.toList());
-
-        if (protocolTypeDistinctList.size() != 1) {
-            //协议相同才能发起批量控制
-            throw new IllegalArgumentException("协议不一致, 控制失败. 请检查 productKey 设置的协议是否一致. ");
-        }
-
-        return this.control(ControlUtils.parseCtrl(msgId, protocolTypeDistinctList.get(0), ctrlDTOs));
+        return this.control(ControlUtils.parseCtrl(msgId, ProtocolType.V2, ctrlDTOs));
     }
 
     @Override
@@ -255,102 +250,53 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     }
 
     @Override
-    public OhMyNotiClientImpl addLoginAuthorizes(AuthorizationData... authorizes) {
-        if (Objects.isNull(loginCommand)) {
-            synchronized (OhMyNotiClientImpl.class) {
-                if (Objects.isNull(loginCommand)) {
-                    loginCommand = new LoginReqCommandBody();
+    public OhMyNotiClient setCredentials(List<Credential> _credentials) {
+        CREDENTIAL_LOCK.writeLock().lock();
+        try {
+            Preconditions.checkArgument(_credentials != null && _credentials.size() > 0,
+                    "credentials can not be empty.");
+
+            for (Credential credential : _credentials) {
+                if (!this.credentials.contains(credential)) {
+                    //新增订阅
+                    sendMsg(new SubscribeReqCommandBody(credential).getOrder());
                 }
             }
+
+            //旧对新的差集, 取消订阅
+            this.credentials.stream()
+                    .filter(c -> !_credentials.contains(c))
+                    .forEach(c -> sendMsg(new UnsubscribeReqCommandBody(c).getOrder()));
+
+            this.credentials = _credentials;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            CREDENTIAL_LOCK.writeLock().unlock();
+            log.debug("释放 CREDENTIAL_LOCK.");
         }
-
-        loginCommand.setPrefetchCount(this.snotiConfig.getPrefetchCount());
-        loginCommand.addLoginAuthorizes(authorizes);
-
-        //初始化产品协议map, 方便构建控制指令
-        productKeyProtocolMap = loginCommand.getData().stream()
-                .collect(Collectors.toMap(AuthorizationData::getProductKey, AuthorizationData::getProtocolType, (oldVal, newVal) -> newVal));
-
-        final boolean loginSuccessful = Objects.equals(loginState, LoginState.LOGIN_SUCCESSFUL);
-        if (loginSuccessful) {
-            //当前状态为登录成功, 则调用动态添加
-            SubscribeReqCommandBody subscribeReqCommandBody = new SubscribeReqCommandBody();
-            subscribeReqCommandBody.setData(Arrays.asList(authorizes));
-            String order = subscribeReqCommandBody.getOrder();
-            log.info("当前客户端为登录成功, 开始调用动态登录. order[{}]", order);
-
-            sendControlOrder(order);
-        }
-
         return this;
     }
 
     @Override
-    public OhMyNotiClient subscribe(AuthorizationData... authorizes) {
-        return addLoginAuthorizes(authorizes);
-    }
-
-    /**
-     * 取消订阅
-     *
-     * @param authorizationData the authorization data
-     */
-    @Override
-    public OhMyNotiClient unsubscribe(AuthorizationData authorizationData) {
-        String productKey = authorizationData.getProductKey();
-        boolean pkIsInvalid = !productKeyProtocolMap.containsKey(productKey);
-        if (pkIsInvalid) {
-            log.warn("productKey 无效, 不需要执行取消订阅. productKey[{}]", productKey);
-            throw new IllegalArgumentException(String.format("请先登录productKey[%s]", productKey));
+    public void markLoginState(JSONObject json) {
+        CREDENTIAL_LOCK.writeLock().lock();
+        try {
+            SubscribeCallbackEventBody body = CommandUtils.parsePushEvent(json, SubscribeCallbackEventBody.class);
+            setCredentials(getCredentials().stream()
+                    .peek(it -> {
+                        if (StringUtils.equals(it.getProductKey(), body.getProductKey())) {
+                            it.setLoginState(body.getResult() ? LoginState.LOGIN_SUCCESSFUL : LoginState.LOGIN_FAILED);
+                        }
+                    })
+                    .collect(Collectors.toList()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            CREDENTIAL_LOCK.writeLock().unlock();
+            log.debug("释放 CREDENTIAL_LOCK.");
         }
-
-        UnsubscribeReqCommandBody unsubscribeReqCommandBody = new UnsubscribeReqCommandBody();
-        unsubscribeReqCommandBody.setData(Collections.singletonList(authorizationData));
-        String unsubscribeReqCommandBodyOrder = unsubscribeReqCommandBody.getOrder();
-        log.info("发送取消订阅请求. {}", unsubscribeReqCommandBodyOrder);
-        sendControlOrder(unsubscribeReqCommandBodyOrder);
-
-        productKeyProtocolMap.remove(productKey);
-
-        return this;
-    }
-
-    @Override
-    public synchronized OhMyNotiClientImpl reload(AuthorizationData... authorizes) {
-        loginCommand = null;
-        //登陆状态设置为未登陆, 从而结束写数据
-        setLoginState(LoginState.NOT_LOGGED);
-        addLoginAuthorizes(authorizes);
-
-        //关闭链接以重连
-        this.channel.close();
-        this.callback.reload(authorizes);
-        log.info("snoti客户端即将重新加载登录信息 ...");
-        return this;
-    }
-
-    @Override
-    public synchronized void setLoginState(LoginState loginState) {
-        if (Objects.equals(loginState, LoginState.NOT_LOGGED)) {
-            //初始化需要清空ack队列, 避免ack错误MQ会被断开
-            log.warn("snoti客户端登录状态重置为未登录, 即将清空无效的ack和登陆/订阅消息.");
-            this.ackReplyQueue.clear();
-            log.info("清空ack队列成功.");
-
-            this.controlQueue.removeIf(msg -> {
-                JSONObject json = JSONObject.parseObject(msg);
-                String cmd = json.getString("cmd");
-                boolean clean = StringUtils.equals(cmd, "subscribe_req") || StringUtils.equals(cmd, "login_req");
-                if (clean) {
-                    log.info("清理登陆/订阅请求. {}", msg);
-                }
-                return clean;
-            });
-            log.info("清空登陆/订阅成功.");
-        }
-
-        this.loginState = loginState;
-        log.info("客户端登录状态为[{}]", loginState);
     }
 
     @Override
@@ -462,11 +408,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     @Override
     public synchronized void doConnect() {
         log.info("开始建立连接...");
-        if (Objects.equals(LoginState.LOGGING, loginState)) {
-            log.info("snoti登录中...");
-        } else if (Objects.equals(LoginState.LOGIN_FAILED, loginState)) {
-            log.warn("snoti登录信息出错, 请使用reload方法重新加载登录信息...");
-        } else if (this.channel == null || !this.channel.isActive()) {
+        if (this.channel == null || !this.channel.isActive()) {
             ChannelFuture future = this.bootstrap.connect(this.snotiConfig.getHost(), this.snotiConfig.getPort());
             future.addListener((ChannelFutureListener) futureListener -> {
                 if (futureListener.isSuccess()) {
@@ -481,7 +423,6 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                 }
 
             });
-
         }
     }
 
@@ -490,7 +431,6 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
      */
     private void stopComponents() {
         bootstrap.config().group().shutdownGracefully();
-        setLoginState(LoginState.NOT_LOGGED);
         this.channel.close();
         log.warn("client is about to shutdown...");
     }

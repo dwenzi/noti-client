@@ -1,7 +1,6 @@
 package com.gizwits.noti.noticlient.handler;
 
 import com.alibaba.fastjson.JSONObject;
-import com.gizwits.noti.noticlient.AbstractSnotiClient;
 import com.gizwits.noti.noticlient.OhMyNotiClient;
 import com.gizwits.noti.noticlient.OhMyNotiClientImpl;
 import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
@@ -15,12 +14,10 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Collections;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * The type Client handler.
@@ -31,7 +28,7 @@ import java.util.Optional;
 @Slf4j
 public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
 
-    private OhMyNotiClient ohMyNotiClient;
+    private OhMyNotiClient client;
 
     /**
      * Instantiates a new Client handler.
@@ -39,7 +36,7 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
      * @param client the client
      */
     public SnotiChannelHandler(OhMyNotiClientImpl client) {
-        this.ohMyNotiClient = client;
+        this.client = client;
     }
 
     @Override
@@ -72,30 +69,22 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
                             .orElse(false);
                     if (loginResult) {
                         log.debug("snoti客户端登录成功...");
-                        ohMyNotiClient.setLoginState(LoginState.LOGIN_SUCCESSFUL);
-                        ohMyNotiClient.getCallback().loginSuccessful();
+                        client.getCallback().loginSuccessful();
                         //登陆成功后才允许推送信息
-                        ohMyNotiClient.switchPushMessage();
+                        client.switchPushMessage();
 
                         //登陆成功, 开始准备订阅信息
-                        AbstractSnotiClient client = (AbstractSnotiClient) this.ohMyNotiClient;
-                        boolean smartLogin = BooleanUtils.isTrue(client.getSnotiConfig().getSmartLogin());
-                        if (smartLogin) {
-                            log.info("使用智能登陆, 开始准备订阅指令");
-                            client.getLoginCommand().getData().stream()
-                                    .map(it -> new SubscribeReqCommandBody().setData(Collections.singletonList(it)))
-                                    .map(AbstractCommandBody::getOrder)
-                                    .forEach(client::sendMsg);
-                        }
-
+                        this.client.getCredentials().stream()
+                                .map(SubscribeReqCommandBody::new)
+                                .map(AbstractCommandBody::getOrder)
+                                .forEach(client::sendMsg);
                     } else {
                         log.warn("snoti客户端登录失败...");
                         String errorMessage = Optional.of(jsonObject)
                                 .map(json -> json.getJSONObject("data"))
                                 .map(json -> json.getString("msg"))
                                 .orElse("登录失败");
-                        ohMyNotiClient.getCallback().loginFailed(errorMessage);
-                        ohMyNotiClient.setLoginState(LoginState.LOGIN_FAILED);
+                        client.getCallback().loginFailed(errorMessage);
                     }
                     break;
 
@@ -104,6 +93,10 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
                     break;
 
                 case subscribe_res:
+                    client.markLoginState(jsonObject);
+                    storeMsg(jsonObject);
+                    break;
+
                 case unsubscribe_res:
                 case remote_control_res:
                 case remote_control_v2_res:
@@ -119,7 +112,7 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
     }
 
     private void storeMsg(JSONObject jsonObject) {
-        boolean storeControlRespSuccessful = ohMyNotiClient.storeInformation(jsonObject);
+        boolean storeControlRespSuccessful = client.storeInformation(jsonObject);
         //存储信息成功
         if (storeControlRespSuccessful) {
             if (log.isDebugEnabled()) {
@@ -141,36 +134,13 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
         log.debug("连接激活即将发起登陆信息...");
-        this.ohMyNotiClient.setLoginState(LoginState.LOGGING);
 
-        AbstractSnotiClient client = (AbstractSnotiClient) this.ohMyNotiClient;
-        boolean smartLogin = BooleanUtils.isTrue(client.getSnotiConfig().getSmartLogin());
-        if (smartLogin) {
-            //智能登陆
-            log.info("即将智能登陆...");
-            doSmartLogin(ctx, client);
-        } else {
-            //普通登陆
-            log.info("即将普通登陆...");
-            doNormalLogin(ctx, client);
-        }
+        //智能登陆
+        log.info("即将智能登陆...");
+        doSmartLogin(ctx);
     }
 
-    private void doNormalLogin(ChannelHandlerContext ctx, AbstractSnotiClient client) {
-        LoginReqCommandBody loginCommand = ObjectUtils.defaultIfNull(client.getLoginCommand(), new LoginReqCommandBody());
-        String loginOrder = loginCommand.getOrder();
-        ctx.writeAndFlush(loginOrder).addListener(future -> {
-            if (future.isSuccess()) {
-                log.info("发送登录指令成功. 登录指令[{}]", loginOrder);
-
-            } else {
-                log.warn("发送登录指令失败, 关闭连接以触发重连. 登录指令[{}]", loginOrder);
-                ctx.channel().close();
-            }
-        });
-    }
-
-    private void doSmartLogin(ChannelHandlerContext ctx, AbstractSnotiClient client) {
+    private void doSmartLogin(ChannelHandlerContext ctx) {
         //首先发送空的登陆信息，然后接收到登陆成功回调后再发起订阅
         LoginReqCommandBody emptyCommandBody = new LoginReqCommandBody();
         emptyCommandBody.setPrefetchCount(emptyCommandBody.getPrefetchCount());
@@ -197,11 +167,11 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
         super.channelInactive(ctx);
 
         log.debug("触发连接断开回调...");
-        this.ohMyNotiClient.getCallback().disconnected();
+        this.client.getCallback().disconnected();
 
-        this.ohMyNotiClient.setLoginState(LoginState.NOT_LOGGED);
+        this.client.setCredentials(this.client.getCredentials().stream().peek(it -> it.setLoginState(LoginState.NOT_LOGGED)).collect(Collectors.toList()));
 
-        this.ohMyNotiClient.doConnect();
+        this.client.doConnect();
     }
 
     /**

@@ -8,7 +8,6 @@ package com.gizwits.noti.noticlient.enums;
  */
 public enum LoginState {
     NOT_LOGGED,
-    LOGGING,
     LOGIN_FAILED,
     LOGIN_SUCCESSFUL
 }

@@ -42,7 +42,6 @@ public class SnotiConfig {
         //其他配置
         this.useEpoll = true;
         this.automaticConfirmation = true;
-        this.smartLogin = false;
     }
 
     /**
@@ -195,16 +194,4 @@ public class SnotiConfig {
      * snoti服务端不会再推送消息.
      */
     private Boolean automaticConfirmation;
-
-    /**
-     * 是否使用智能登陆
-     * 默认为false{@link #SnotiConfig()}
-     * <p>
-     * 建议当产品超过3个时, 设置为true, 从而保证个别错误的登陆信息不会影响其他产品使用snoti.
-     * 当true时, 会发生以下事情:
-     * 1. 登录时, 使用snoti订阅接口逐个进行动态订阅.
-     * 2. 断线重连时, 使用snoti订阅接口逐个进行动态订阅.
-     * 3. reload时， 使用snoti订阅接口逐个进行动态订阅.
-     */
-    private Boolean smartLogin;
 }

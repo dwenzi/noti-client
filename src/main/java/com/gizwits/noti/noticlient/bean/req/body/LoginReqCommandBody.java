@@ -3,11 +3,13 @@ package com.gizwits.noti.noticlient.bean.req.body;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.gizwits.noti.noticlient.bean.Credential;
 import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import sun.security.krb5.internal.AuthorizationData;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,21 +41,7 @@ public final class LoginReqCommandBody extends AbstractCommandBody {
     /**
      * 产品登录验证信息
      */
-    private List<AuthorizationData> data = new ArrayList<>();
-
-    /**
-     * 添加产品登录验证信息
-     *
-     * @param authorizes
-     * @return
-     */
-    public void addLoginAuthorizes(AuthorizationData... authorizes) {
-        data = Stream.of(data, Arrays.asList(authorizes))
-                .flatMap(List::stream)
-                .distinct()
-                .collect(Collectors.toList());
-
-    }
+    private List<Credential> data = new ArrayList<>();
 
     @Override
     String getJson() {
