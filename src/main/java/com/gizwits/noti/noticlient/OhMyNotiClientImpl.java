@@ -258,6 +258,21 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
     }
 
     @Override
+    public List<Credential> getCredentials() {
+        CREDENTIAL_LOCK.readLock().lock();
+        List<Credential> credentials = null;
+        try {
+            credentials = this.credentials;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            CREDENTIAL_LOCK.readLock().unlock();
+        }
+
+        return credentials;
+    }
+
+    @Override
     public OhMyNotiClient setCredentials(List<Credential> _credentials) {
         CREDENTIAL_LOCK.writeLock().lock();
         try {

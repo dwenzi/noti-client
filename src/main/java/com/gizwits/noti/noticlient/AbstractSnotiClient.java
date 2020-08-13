@@ -41,7 +41,6 @@ public abstract class AbstractSnotiClient {
     /**
      * The credentials
      */
-    @Getter
     protected List<Credential> credentials;
 
     /**
