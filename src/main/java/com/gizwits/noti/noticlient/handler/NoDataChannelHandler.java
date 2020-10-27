@@ -1,6 +1,7 @@
 package com.gizwits.noti.noticlient.handler;
 
 import com.gizwits.noti.noticlient.config.SnotiCallback;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.IdleState;
@@ -14,6 +15,7 @@ import java.util.Objects;
  * @since 1.0
  */
 @Slf4j
+@ChannelHandler.Sharable
 public class NoDataChannelHandler extends SimpleChannelInboundHandler<String> {
 
     private final SnotiCallback snotiCallback;

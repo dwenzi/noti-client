@@ -1,6 +1,10 @@
 package com.gizwits.noti.noticlient;
 
 import com.alibaba.fastjson.JSONObject;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
+import com.codahale.metrics.Slf4jReporter;
 import com.gizwits.noti.noticlient.bean.Credential;
 import com.gizwits.noti.noticlient.bean.req.NotiCtrlDTO;
 import com.gizwits.noti.noticlient.bean.req.NotiGeneralCommandType;
@@ -59,6 +63,10 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
 
     private Channel channel;
     private Bootstrap bootstrap;
+    //metrics
+    private MetricRegistry metricRegistry;
+    private ScheduledReporter reporter;
+    private Meter meter;
 
     private static final long DEFAULT_POLL_TIMEOUT_MS = 2;
     private static final AtomicBoolean WORK = new AtomicBoolean(false);
@@ -347,52 +355,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
             callback = SnotiCallback.identity();
         }
         try {
-            ChannelInitializer<SocketChannel> handler = new ChannelInitializer<SocketChannel>() {
-                @Override
-                protected void initChannel(SocketChannel socketChannel) throws Exception {
-
-                    //check config
-                    Boolean automaticConfirmation = snotiConfig.getAutomaticConfirmation();
-                    if (!automaticConfirmation) {
-                        //手动回复
-                        log.info("手动回复已开启, 请在处理完消息后手动回复ack.");
-                    }
-
-                    ChannelPipeline p = socketChannel.pipeline();
-
-                    //ssl
-                    SSLContext sslContext = SSLContext.getInstance("SSL");
-                    sslContext.init(null, new TrustManager[]{new SnotiTrustManager()}, new SecureRandom());
-                    SSLEngine sslEngine = sslContext.createSSLEngine();
-                    sslEngine.setUseClientMode(true);
-                    p.addLast(new SslHandler(sslEngine));
-
-                    //编码
-                    p.addLast(new LineBasedFrameDecoder(16384));
-                    p.addLast(new StringDecoder(CharsetUtil.UTF_8));
-                    p.addLast(new StringEncoder(CharsetUtil.UTF_8));
-
-                    //心跳检查, 每隔一定的时间如果 client 和 server 没有通信消息. client 就会主动发送 ping, server 收到后会恢复 pong
-                    Long heartbeatIntervalSeconds = OhMyNotiClientImpl.this.snotiConfig.getHeartbeatIntervalSeconds();
-                    log.info("设置snoti客户端与服务器心跳检测间隔. [{}]s", heartbeatIntervalSeconds);
-                    p.addLast(new IdleStateHandler(heartbeatIntervalSeconds, heartbeatIntervalSeconds, heartbeatIntervalSeconds, TimeUnit.SECONDS));
-
-                    p.addLast(new SnotiChannelHandler(OhMyNotiClientImpl.this));
-
-                    if (OhMyNotiClientImpl.this.snotiConfig.getEnableCheckNoData()) {
-                        //开启无数据检测
-                        Integer noDataWaringMinutes = OhMyNotiClientImpl.this.snotiConfig.getNoDataWarningMinutes();
-                        log.info("设置snoti客户端无数据读取检查. 检查时间间隔[{}]min", noDataWaringMinutes);
-                        p.addLast(new NoDataChannelHandler(noDataWaringMinutes, OhMyNotiClientImpl.this.getCallback()));
-                    }
-
-                    if (OhMyNotiClientImpl.this.snotiConfig.getWithMetrics()) {
-                        log.info("使用snoti指标统计.");
-                        p.addLast(new SnotiMetricsHandler());
-                    }
-                }
-            };
-
+            ChannelInitializer<SocketChannel> handler = getSocketChannelChannelInitializer();
             this.bootstrap = automaticallyGeneratedBootstrap(this.snotiConfig.getUseEpoll())
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                     .option(ChannelOption.SO_KEEPALIVE, true)
@@ -408,6 +371,74 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
         }
 
         callback.startup();
+    }
+
+    private ChannelInitializer<SocketChannel> getSocketChannelChannelInitializer() {
+        return new ChannelInitializer<SocketChannel>() {
+            @Override
+            protected void initChannel(SocketChannel socketChannel) throws Exception {
+
+                //check config
+                Boolean automaticConfirmation = snotiConfig.getAutomaticConfirmation();
+                if (!automaticConfirmation) {
+                    //手动回复
+                    log.info("手动回复已开启, 请在处理完消息后手动回复ack.");
+                }
+
+                ChannelPipeline p = socketChannel.pipeline();
+
+                //ssl
+                SSLContext sslContext = SSLContext.getInstance("SSL");
+                sslContext.init(null, new TrustManager[]{new SnotiTrustManager()}, new SecureRandom());
+                SSLEngine sslEngine = sslContext.createSSLEngine();
+                sslEngine.setUseClientMode(true);
+                p.addLast(new SslHandler(sslEngine));
+
+                //编码
+                p.addLast(new LineBasedFrameDecoder(16384));
+                p.addLast(new StringDecoder(CharsetUtil.UTF_8));
+                p.addLast(new StringEncoder(CharsetUtil.UTF_8));
+
+                //心跳检查, 每隔一定的时间如果 client 和 server 没有通信消息. client 就会主动发送 ping, server 收到后会恢复 pong
+                Long heartbeatIntervalSeconds = OhMyNotiClientImpl.this.snotiConfig.getHeartbeatIntervalSeconds();
+                log.info("设置snoti客户端与服务器心跳检测间隔. [{}]s", heartbeatIntervalSeconds);
+                p.addLast(new IdleStateHandler(heartbeatIntervalSeconds, heartbeatIntervalSeconds, heartbeatIntervalSeconds, TimeUnit.SECONDS));
+
+                p.addLast(new SnotiChannelHandler(OhMyNotiClientImpl.this));
+
+                if (OhMyNotiClientImpl.this.snotiConfig.getEnableCheckNoData()) {
+                    //开启无数据检测
+                    Integer noDataWaringMinutes = OhMyNotiClientImpl.this.snotiConfig.getNoDataWarningMinutes();
+                    log.info("设置snoti客户端无数据读取检查. 检查时间间隔[{}]min", noDataWaringMinutes);
+                    p.addLast(new NoDataChannelHandler(noDataWaringMinutes, OhMyNotiClientImpl.this.getCallback()));
+                }
+
+                if (OhMyNotiClientImpl.this.snotiConfig.getWithMetrics()) {
+                    log.info("使用snoti指标统计.");
+                    p.addLast(new SnotiMetricsHandler(createMeterIfNecessary()));
+                }
+            }
+        };
+    }
+
+    private Meter createMeterIfNecessary() {
+        if (Objects.isNull(this.meter)) {
+            synchronized (OhMyNotiClientImpl.class) {
+                if (Objects.isNull(this.meter)) {
+                    this.metricRegistry = new MetricRegistry();
+                    this.reporter = Slf4jReporter.forRegistry(metricRegistry)
+                            .outputTo(log)
+                            .convertRatesTo(TimeUnit.SECONDS)
+                            .convertDurationsTo(TimeUnit.SECONDS)
+                            .build();
+                    this.meter = metricRegistry.meter("event_msg_meter");
+                    log.info("初始化snoti指标成功.");
+                    reporter.start(15, 30, TimeUnit.SECONDS);
+                }
+            }
+        }
+
+        return meter;
     }
 
     private void initQueue() {
@@ -455,8 +486,13 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
      * 停止组件
      */
     private void stopComponents() {
-        bootstrap.config().group().shutdownGracefully();
-        this.channel.close();
+        try {
+            bootstrap.config().group().shutdownGracefully();
+            this.channel.close();
+            this.reporter.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         log.warn("client is about to shutdown...");
     }
 

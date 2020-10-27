@@ -8,6 +8,7 @@ import com.gizwits.noti.noticlient.bean.req.body.AbstractCommandBody;
 import com.gizwits.noti.noticlient.bean.req.body.LoginReqCommandBody;
 import com.gizwits.noti.noticlient.bean.req.body.SubscribeReqCommandBody;
 import com.gizwits.noti.noticlient.util.CommandUtils;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.IdleState;
@@ -24,6 +25,7 @@ import java.util.Optional;
  * @since 1.0
  */
 @Slf4j
+@ChannelHandler.Sharable
 public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
 
     private OhMyNotiClient client;
