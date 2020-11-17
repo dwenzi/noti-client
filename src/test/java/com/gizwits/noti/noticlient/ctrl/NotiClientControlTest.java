@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -72,6 +73,7 @@ public class NotiClientControlTest extends NotiClientTest {
      * 适用于定义了数据点的产品
      */
     @Test
+    @Ignore
     public void dataPointControl() throws InterruptedException {
         Map<String, Object> attrs = new HashMap<>();
         //布尔
@@ -115,6 +117,7 @@ public class NotiClientControlTest extends NotiClientTest {
      * 适用于没有定义数据点的产品
      */
     @Test
+    @Ignore
     public void rawControl() throws InterruptedException {
         //下发内容为空
         Byte[] rawAttrs = new Byte[]{};
