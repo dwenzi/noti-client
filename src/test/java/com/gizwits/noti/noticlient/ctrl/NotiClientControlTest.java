@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -34,8 +33,8 @@ public class NotiClientControlTest extends NotiClientTest {
     @Before
     public void startClient() {
         //请替换为自己的测试设备信息
-        mac = "macmacmacmacmac";
-        did = "diddiddiddiddid";
+        mac = "virtual:site";
+        did = "nNKcR5nDshHY4aKfSTPptG";
         productKey = getProperties().getProductKey();
 
         log.info("Client be initializing");
@@ -73,7 +72,6 @@ public class NotiClientControlTest extends NotiClientTest {
      * 适用于定义了数据点的产品
      */
     @Test
-    @Ignore//服务端返回 invalid msg
     public void dataPointControl() throws InterruptedException {
         Map<String, Object> attrs = new HashMap<>();
         //布尔
@@ -102,8 +100,7 @@ public class NotiClientControlTest extends NotiClientTest {
         client.control(productKey, mac, did, attrs);
         while (true) {
             JSONObject json = client.receiveMessage();
-            boolean isCtrlResp = StringUtils.equals("remote_control_v2_res", json.getString("cmd"))
-                    || StringUtils.equals("remote_control_res", json.getString("cmd"));
+            boolean isCtrlResp = StringUtils.equals("remote_control_v2_res", json.getString("cmd"));
             if (isCtrlResp) {
                 log.info("ctrl resp. {}", json.toJSONString());
                 break;
@@ -118,7 +115,6 @@ public class NotiClientControlTest extends NotiClientTest {
      * 适用于没有定义数据点的产品
      */
     @Test
-    @Ignore//服务端返回 invalid msg
     public void rawControl() throws InterruptedException {
         //下发内容为空
         Byte[] rawAttrs = new Byte[]{};
@@ -136,8 +132,7 @@ public class NotiClientControlTest extends NotiClientTest {
 
         while (true) {
             JSONObject json = client.receiveMessage();
-            boolean isCtrlResp = StringUtils.equals("remote_control_v2_res", json.getString("cmd"))
-                    || StringUtils.equals("remote_control_res", json.getString("cmd"));
+            boolean isCtrlResp = StringUtils.equals("remote_control_v2_res", json.getString("cmd"));
             if (isCtrlResp) {
                 log.info("ctrl resp. {}", json.toJSONString());
                 break;

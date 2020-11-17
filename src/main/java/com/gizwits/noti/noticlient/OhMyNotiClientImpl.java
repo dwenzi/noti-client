@@ -16,7 +16,6 @@ import com.gizwits.noti.noticlient.config.SnotiCallback;
 import com.gizwits.noti.noticlient.config.SnotiConfig;
 import com.gizwits.noti.noticlient.config.SnotiTrustManager;
 import com.gizwits.noti.noticlient.enums.LoginState;
-import com.gizwits.noti.noticlient.enums.ProtocolType;
 import com.gizwits.noti.noticlient.handler.NoDataChannelHandler;
 import com.gizwits.noti.noticlient.handler.SnotiChannelHandler;
 import com.gizwits.noti.noticlient.handler.SnotiMetricsHandler;
@@ -234,12 +233,12 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
 
     @Override
     public boolean control(String msgId, String productKey, String mac, String did, Object data) {
-        return this.control(ControlUtils.parseCtrl(msgId, ProtocolType.V2, NotiCtrlDTO.of(productKey, mac, did, data)));
+        return this.control(ControlUtils.parseCtrl(msgId, NotiCtrlDTO.of(productKey, mac, did, data)));
     }
 
     @Override
     public boolean batchControl(String msgId, NotiCtrlDTO... ctrlDTOs) {
-        return this.control(ControlUtils.parseCtrl(msgId, ProtocolType.V2, ctrlDTOs));
+        return this.control(ControlUtils.parseCtrl(msgId, ctrlDTOs));
     }
 
     @Override

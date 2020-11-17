@@ -16,10 +16,8 @@ public enum NotiGeneralCommandType {
     unsubscribe_res("unsubscribe_res", "", "取消订阅回复"),
     event_push("event_push", "", "事件推送"),
     event_ack("event_ack", "", "ack事件回复"),
-    remote_control_req("remote_control_req", "", "远程控制设备请求v1版本"),
     remote_control_v2_req("remote_control_v2_req", "", "远程控制设备请求v2版本, 统一了控制接口"),
-    remote_control_nb_req("remote_control_nb_req", "", "远程控制设备请求: NB-IoT"),
-    remote_control_lora_req("remote_control_lora_req", "", "远程控制设备请求: lora"),
+    @Deprecated
     remote_control_res("remote_control_res", "", "远程控制设备回复"),
     remote_control_v2_res("remote_control_v2_res", "", "远程控制设备回复v2"),
     pong("pong", "{\"cmd\":\"pong\"}\n", "服务端发往客户端的心跳"),

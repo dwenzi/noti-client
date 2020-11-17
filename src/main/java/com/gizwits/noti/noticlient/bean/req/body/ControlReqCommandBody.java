@@ -15,6 +15,12 @@ import lombok.experimental.Accessors;
 import java.util.List;
 
 /**
+ * 控制接口
+ * <p>
+ * 特性
+ * 1. 统一了 NB-IoT、LoRa、Wi-Fi、GPRS控制接口
+ * 2. 数据点兼容了扩展数据点
+ *
  * @author Jcxcc
  * @since 1.0
  */
@@ -86,8 +92,8 @@ public class ControlReqCommandBody extends AbstractCommandBody {
 
     @Override
     String getJson() {
-        //设置为v1控制
-        this.cmd = NotiGeneralCommandType.remote_control_req;
+        //设置为v2控制
+        this.cmd = NotiGeneralCommandType.remote_control_v2_req;
         return JSONObject.toJSONString(this, SerializerFeature.IgnoreNonFieldGetter, SerializerFeature.WriteEnumUsingName);
     }
 }
