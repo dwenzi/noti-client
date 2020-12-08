@@ -144,10 +144,8 @@ public class SnotiChannelHandler extends SimpleChannelInboundHandler<String> {
         String order = emptyCommandBody.getOrder();
         ctx.writeAndFlush(order).addListener(future -> {
             if (!future.isSuccess()) {
-                log.warn("发送空登陆指令失败, 关闭连接以触发重连. 登陆指令 {}", order);
+                log.warn("发送空登陆指令失败, 关闭连接以触发重连.");
                 ctx.channel().close();
-            } else {
-                log.info("发送空登陆指令成功. 登陆指令 {}", order);
             }
         });
     }
