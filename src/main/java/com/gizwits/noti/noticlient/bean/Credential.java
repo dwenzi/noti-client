@@ -1,12 +1,12 @@
 package com.gizwits.noti.noticlient.bean;
 
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.gizwits.noti.noticlient.bean.req.NotiReqPushEvents;
 import com.gizwits.noti.noticlient.enums.LoginState;
 import lombok.*;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -16,8 +16,9 @@ import java.util.stream.Stream;
  * @author Jcxcc
  * @since 1.0.0
  */
+@Setter
 @Getter
-@EqualsAndHashCode(of = {"productKey", "subkey", "authId", "authSecret"})
+@EqualsAndHashCode(of = {"productKey", "subkey", "authId", "authSecret", "events"})
 public class Credential {
 
     /**
@@ -65,11 +66,15 @@ public class Credential {
         this.subkey = subkey;
         this.authId = authId;
         this.authSecret = authSecret;
-        if (Objects.nonNull(events)) {
-            this.events = events.stream().map(NotiReqPushEvents::getCode).collect(Collectors.toList());
-        } else {
-            this.events = Stream.of(NotiReqPushEvents.values()).map(NotiReqPushEvents::getCode).collect(Collectors.toList());
-        }
+
+        this.events = events != null
+                ? events.stream().map(NotiReqPushEvents::getCode).sorted().collect(Collectors.toList())
+                : Stream.of(NotiReqPushEvents.values()).map(NotiReqPushEvents::getCode).sorted().collect(Collectors.toList());
         this.loginState = LoginState.NOT_LOGGED;
+    }
+
+    @Override
+    public String toString() {
+        return JSONObject.toJSONString(this);
     }
 }

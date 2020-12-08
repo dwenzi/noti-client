@@ -101,7 +101,7 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
 
     @Override
     public synchronized void switchPushMessage() {
-        log.info("推送开关打开...");
+        log.debug("推送开关打开...");
 
         WORK.set(true);
         executor.execute(() -> {
@@ -287,17 +287,17 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
                     "credentials can not be empty.");
 
             if (WORK.get()) {
-                for (Credential credential : _credentials) {
-                    if (!this.credentials.contains(credential)) {
-                        //新增订阅
-                        sendMsg(new SubscribeReqCommandBody(credential).getOrder());
-                    }
-                }
-
                 //旧对新的差集, 取消订阅
                 this.credentials.stream()
                         .filter(c -> !_credentials.contains(c))
-                        .forEach(c -> sendMsg(new UnsubscribeReqCommandBody(c).getOrder()));
+                        .forEach(c -> handleSubscribe(false, c));
+
+                for (Credential credential : _credentials) {
+                    if (!this.credentials.contains(credential)) {
+                        //新增订阅
+                        handleSubscribe(true, credential);
+                    }
+                }
             }
 
             this.credentials = _credentials;
@@ -309,6 +309,22 @@ public class OhMyNotiClientImpl extends AbstractSnotiClient implements OhMyNotiC
             log.debug("释放 CREDENTIAL_LOCK.");
         }
         return this;
+    }
+
+
+    /**
+     * Handle subscribe.
+     *
+     * @param subscribe  the subscribe
+     * @param credential the credential
+     */
+    private void handleSubscribe(boolean subscribe, Credential credential) {
+        String order = subscribe
+                ? new SubscribeReqCommandBody(credential).getOrder()
+                : new UnsubscribeReqCommandBody(credential).getOrder();
+        String type = subscribe ? "subscribe" : "unsubscribe";
+        log.info("Sending {} request. {} ", type, order);
+        sendMsg(order);
     }
 
     @Override
