@@ -1,6 +1,13 @@
 package com.gizwits.noti.noticlient.bean.req;
 
+import com.google.common.base.Preconditions;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 登陆请求以及订阅请求的推送事件
@@ -30,11 +37,24 @@ public enum NotiReqPushEvents {
     APP_2_DEV_RAW("device.app2dev.raw", "app控制设备-透传形式"),
     ;
 
-    private String code;
-    private String description;
+    private final String code;
+    private final String description;
+
+    private final static Map<String, NotiReqPushEvents> CODE_2_EVENT_MAP;
+
+    static {
+        CODE_2_EVENT_MAP = Stream.of(NotiReqPushEvents.values())
+                .collect(Collectors.toMap(NotiReqPushEvents::getCode, Function.identity(), (o, n) -> n));
+    }
 
     NotiReqPushEvents(String code, String description) {
         this.code = code;
         this.description = description;
+    }
+
+    public static NotiReqPushEvents codeOf(String code) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(code),
+                "The code can not be blank");
+        return CODE_2_EVENT_MAP.getOrDefault(code, null);
     }
 }
